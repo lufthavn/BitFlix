@@ -24,7 +24,7 @@ public class Program {
 	
 	public static void main(String[] args) throws InterruptedException
 	{
-		Decoder decoder = new Decoder("C:\\Users\\Tobias\\Desktop\\avengers.torrent");
+		Decoder decoder = new Decoder("path/to/torrent/file.torrent");
 		TorrentFile file = new TorrentFile(decoder);
 		TrackerSocket socket = null;
 		try {
