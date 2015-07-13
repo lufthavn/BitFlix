@@ -25,5 +25,20 @@ public class PieceTests {
 		
 		assertTrue(piece.checkHash());
 	}
+	
+	@Test
+	public void canAddUnevenBlocksToPiece() {
+		String expected = "abcdefghijklmnopqrstuvwxyz";
+		byte[] hash = Hashing.Sha1Hash(expected);
+		Piece piece = new Piece(hash, 26, 20);
+		Block b1 = mock(Block.class);
+		Block b2 = mock(Block.class);
+		when(b1.getBytes()).thenReturn("abcdefghijklmnopqrst".getBytes());
+		when(b2.getBytes()).thenReturn("uvwxyz".getBytes());
+		piece.addBlock(0, b1);
+		piece.addBlock(1, b2);
+		
+		assertTrue(piece.checkHash());
+	}
 
 }

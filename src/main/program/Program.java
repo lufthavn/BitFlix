@@ -24,7 +24,8 @@ public class Program {
 	
 	public static void main(String[] args) throws InterruptedException
 	{
-		Decoder decoder = new Decoder("path/to/torrent/file.torrent");
+		//Decoder decoder = new Decoder("path/to/torrent/file.torrent");
+		Decoder decoder = new Decoder("C:/Users/Tobias/Desktop/avengers.torrent");
 		TorrentFile file = new TorrentFile(decoder);
 		TrackerSocket socket = null;
 		try {
@@ -57,11 +58,11 @@ public class Program {
 		List<Peer> peers = new ArrayList<Peer>();
 		PeerRequester peerRequester = new PeerRequester(peers, pool);
 		Thread peerThread = new Thread( peerRequester, "PeerRequesterThread");
-		peerThread.setDaemon(true);
+		peerThread.setDaemon(false);
 		peerThread.start();
-		while(true){
-			System.out.println(peers.size() + " peers.");
-			Thread.sleep(2000);
+		Thread.sleep(30000);
+		for(Peer peer : peers){
+			System.out.println(peer.getAddress() + ":" + peer.getPort());
 		}
 	}
 	
