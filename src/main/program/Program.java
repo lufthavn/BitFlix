@@ -1,6 +1,7 @@
 package program;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.SocketException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -8,6 +9,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
+import peers.PeerPool;
 import models.Peer;
 import trackers.PeerRequester;
 import trackers.Tracker;
@@ -22,7 +24,7 @@ public class Program {
 	public Program() {
 	}
 	
-	public static void main(String[] args) throws InterruptedException
+	public static void main(String[] args) throws InterruptedException, IOException
 	{
 		//Decoder decoder = new Decoder("path/to/torrent/file.torrent");
 		Decoder decoder = new Decoder("C:/Users/Tobias/Desktop/avengers.torrent");
@@ -61,8 +63,16 @@ public class Program {
 		peerThread.setDaemon(false);
 		peerThread.start();
 		Thread.sleep(30000);
+		peerRequester.stop();
+		peerThread.join();
+		PeerPool p = new PeerPool(file);
+		
 		for(Peer peer : peers){
-			System.out.println(peer.getAddress() + ":" + peer.getPort());
+			try{
+				p.connect(peer);
+			}catch(ConnectException e){
+				System.out.println(e.getMessage());
+			}
 		}
 	}
 	

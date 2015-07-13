@@ -28,6 +28,10 @@ public class PeerRequester implements Runnable {
 	public void addTrackers(List<TrackerConnection> connections){
 		trackerPool.addAll(connections);
 	}
+	
+	public void stop(){
+		this.isRunning = false;
+	}
 
 	@Override
 	public void run() {
