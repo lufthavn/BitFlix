@@ -6,9 +6,11 @@ import java.net.SocketException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
+import java.nio.channels.ClosedChannelException;
 import java.util.ArrayList;
 import java.util.List;
 
+import peers.PeerConnector;
 import peers.PeerPool;
 import models.Peer;
 import trackers.PeerRequester;
@@ -65,15 +67,34 @@ public class Program {
 		Thread.sleep(30000);
 		peerRequester.stop();
 		peerThread.join();
-		PeerPool p = new PeerPool(file);
+		PeerPool p = new PeerPool(file, new PeerConnector(file.getInfoHash()));
 		
-		for(Peer peer : peers){
+		for(int i = 0; i < 50; i ++){
+			Peer peer = peers.get(i);
 			try{
 				p.connect(peer);
-			}catch(ConnectException e){
-				System.out.println(e.getMessage());
+			}catch(SocketException e){
+				System.out.println("Cant connect: " + e.getMessage());
+			}catch(ClosedChannelException e){
+				System.out.println("Timed out, closed channel. Message: " + e.getMessage());
+			}catch(IOException e){
+				System.out.println("Connection error: " + e.getMessage());
 			}
 		}
+		for(;;){
+			try{
+				p.connectToPeers();	
+			}catch(SocketException e){
+				System.out.println("Cant connect: " + e.getMessage());
+			}catch(ClosedChannelException e){
+				System.out.println("Timed out, closed channel. Message: " + e.getMessage());
+			}catch(IOException e){
+				System.out.println("Connection error: " + e.getMessage());
+			}
+			Thread.sleep(50);
+		}
+//		System.out.println("All done.");
+//		System.exit(0);
 	}
 	
 }

@@ -8,6 +8,7 @@ public class Peer {
 
 	private InetAddress address;
 	private int port;
+	private String peerId;
 	
 	public Peer(String ip, int port) {
 		try {
@@ -44,6 +45,14 @@ public class Peer {
 	 */
 	public int getPort() {
 		return port;
+	}
+
+	public void setPeerId(String peerId) {
+		this.peerId = peerId;
+	}
+	
+	public String getPeerId(){
+		return peerId;
 	}
 
 }

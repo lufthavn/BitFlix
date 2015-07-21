@@ -3,9 +3,16 @@ package peers;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.SocketChannel;
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.Set;
 
 import files.TorrentFile;
 import models.Peer;
@@ -13,32 +20,23 @@ import models.Peer;
 public class PeerPool {
 
 	private TorrentFile torrent;
+	private IPeerConnector connector;
 	
-	public PeerPool(TorrentFile torrent){
+	public PeerPool(TorrentFile torrent, IPeerConnector connector) throws IOException{
 		this.torrent = torrent;
+		this.connector = connector;
+		
 	}
 	
 	public void connect(Peer peer) throws IOException{
-		
-		ByteBuffer buffer = ByteBuffer.allocate(68);
-		buffer.put((byte) 0x13);
-		buffer.put("BitTorrent protocol".getBytes());
-		buffer.put(new byte[8]);
-		buffer.put(torrent.getInfoHash());
-		buffer.put("abcdefghijklmnopqrst".getBytes());
-		
-		Socket socket = new Socket(peer.getAddress(), peer.getPort());
-		BufferedInputStream in = new BufferedInputStream(socket.getInputStream());
-		byte[] data = buffer.array();
-		for(int i = 0; i < data.length; i++){
-			socket.getOutputStream().write(data[i]);
+		boolean success = connector.addPeer(peer);
+		if(success){
+			System.out.println("added peer with id: " + peer.getPeerId());
 		}
-		buffer = ByteBuffer.allocate(1000);
-		int i = in.read();
-		while(i == 0){
-			i = in.read();
-		}
-		byte[] rec = buffer.array();
-		System.out.println("Done. response: " + i);
+		
+	}
+	
+	public void connectToPeers() throws IOException{
+		connector.connectToPeers();
 	}
 }
