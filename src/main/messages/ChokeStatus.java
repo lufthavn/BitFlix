@@ -1,5 +1,7 @@
 package messages;
 
+import java.nio.ByteBuffer;
+
 public class ChokeStatus extends Message {
 
 	private int id;
@@ -14,6 +16,13 @@ public class ChokeStatus extends Message {
 	@Override
 	public MessageType getType(){
 		return MessageType.fromValue(id);
+	}
+
+	@Override
+	public ByteBuffer getBytes() {
+		return ByteBuffer.allocate(5)
+				.putInt(1) //length
+				.put((byte) id);
 	}
 
 }

@@ -2,20 +2,21 @@ package trackers;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Queue;
 
 import models.Peer;
 
 public class PeerRequester implements Runnable {
 
-	private List<Peer> peers;
+	private Queue<Peer> peers;
 	private TrackerPool trackerPool;
 	private boolean isRunning;
 
-	public PeerRequester(List<Peer> peers) {
+	public PeerRequester(Queue<Peer> peers) {
 		this(peers, new TrackerPool());
 	}
 	
-	public PeerRequester(List<Peer> peers, TrackerPool trackerPool) {
+	public PeerRequester(Queue<Peer> peers, TrackerPool trackerPool) {
 		this.peers = peers;
 		this.trackerPool = trackerPool;
 		this.isRunning = true;

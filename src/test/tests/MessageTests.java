@@ -1,17 +1,22 @@
 package tests;
 
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 import java.nio.ByteBuffer;
 
-import messages.BitField;
+import messages.Bitfield;
 import messages.Have;
 import messages.Message;
 import messages.MessageType;
 import messages.Piece;
 import messages.Request;
+import models.Peer;
 
 import org.junit.Test;
+
+import files.TorrentFile;
+import util.BitfieldHelper;
 
 public class MessageTests {
 
@@ -54,7 +59,7 @@ public class MessageTests {
 		buffer.put((byte) 5);
 		buffer.put("abcde".getBytes());
 		
-		BitField m = (BitField) Message.fromBytes(buffer);
+		Bitfield m = (Bitfield) Message.fromBytes(buffer);
 		assertEquals(MessageType.BITFIELD, m.getType());
 		assertArrayEquals("abcde".getBytes(), m.getBitField());
 	}
@@ -87,5 +92,35 @@ public class MessageTests {
 		Piece m = (Piece) Message.fromBytes(buffer);
 		assertEquals(MessageType.PIECE, m.getType());
 		assertArrayEquals("abcdefghijklmnopqrstuvwxyz".getBytes(), m.getBlock());
+	}
+	
+	@Test
+	public void canInterpretBitfield(){
+		int i = 1333333337; //01001111 01111001 00001101 01011001
+		byte[] bitfield = ByteBuffer.allocate(4).putInt(i).array();
+		boolean isAvailable = BitfieldHelper.isAtIndex(bitfield, 9); // bit at index 9 is 1, so should return true.
+		assertTrue(isAvailable);
+	}
+	
+	@Test
+	public void canSetBitField(){
+		TorrentFile file = mock(TorrentFile.class);
+		when(file.getLength()).thenReturn((long) 225);
+		Peer peer = new Peer("192.30.252.128", 34);
+		peer.initializeHaveBitfield(file);
+		byte[] bitfield = peer.getHaveBitField();
+		assertEquals(29, bitfield.length);
+	}
+	
+	@Test
+	public void canSetHasPiece(){
+		TorrentFile file = mock(TorrentFile.class);
+		when(file.getLength()).thenReturn((long) 225);
+		Peer peer = new Peer("192.30.252.128", 34);
+		peer.initializeHaveBitfield(file); //29 empty bytes
+		peer.setHasPiece(7); //10000000 00000000
+		peer.setHasPiece(12);//00000000 00001000
+		assertEquals(1, peer.getHaveBitField()[0]);
+		assertEquals(8, peer.getHaveBitField()[1]);
 	}
 }

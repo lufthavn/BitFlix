@@ -1,5 +1,7 @@
 package messages;
 
+import java.nio.ByteBuffer;
+
 public class Cancel extends Message {
 	
 	private int index;
@@ -36,6 +38,16 @@ public class Cancel extends Message {
 	 */
 	public int getLength() {
 		return length;
+	}
+
+	@Override
+	public ByteBuffer getBytes() {
+		return ByteBuffer.allocate(17)
+				.putInt(13) //length
+				.put((byte) MessageType.CANCEL.getValue())
+				.putInt(index)
+				.putInt(begin)
+				.putInt(length);
 	}
 	
 	

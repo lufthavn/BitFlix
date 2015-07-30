@@ -1,5 +1,7 @@
 package messages;
 
+import java.nio.ByteBuffer;
+
 public class Port extends Message {
 
 	private int port;
@@ -19,6 +21,15 @@ public class Port extends Message {
 	 */
 	public int getPort() {
 		return port;
+	}
+
+
+	@Override
+	public ByteBuffer getBytes() {
+		return ByteBuffer.allocate(7)
+				.putInt(3)
+				.put((byte) MessageType.PORT.getValue())
+				.putShort((short) port);
 	}
 	
 }

@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 public abstract class Message {
 	
 	public abstract MessageType getType();
+	public abstract ByteBuffer getBytes();
 	
 	public static Message fromBytes(byte[] bytes){
 		return fromBytes(ByteBuffer.wrap(bytes));
@@ -38,7 +39,7 @@ public abstract class Message {
 					byte[] bitField = new byte[bitFieldLength];
 					buffer.get(bitField, 0, bitFieldLength);
 					
-					message = new BitField(bitField);
+					message = new Bitfield(bitField);
 				}
 				break;
 				case 6:{
@@ -79,4 +80,5 @@ public abstract class Message {
 		
 		return message;
 	}
+
 }

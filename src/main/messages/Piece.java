@@ -1,5 +1,7 @@
 package messages;
 
+import java.nio.ByteBuffer;
+
 public class Piece extends Message {
 
 	private int index;
@@ -36,6 +38,16 @@ public class Piece extends Message {
 	 */
 	public byte[] getBlock() {
 		return block;
+	}
+
+	@Override
+	public ByteBuffer getBytes() {
+		return ByteBuffer.allocate(13 + block.length)
+				.putInt(9 + block.length) //length
+				.put((byte) MessageType.PIECE.getValue())
+				.putInt(index)
+				.putInt(begin)
+				.put(block);
 	}
 
 }
