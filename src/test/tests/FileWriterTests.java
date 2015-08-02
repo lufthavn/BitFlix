@@ -24,7 +24,7 @@ import org.apache.commons.io.*;
 import files.FileInfo;
 import files.Piece;
 import files.TorrentFile;
-import files.TorrentFileWriter;
+import files.PieceWriter;
 
 public class FileWriterTests {
 	
@@ -38,7 +38,7 @@ public class FileWriterTests {
 		when(torrent.getLength()).thenReturn((long) 1024);
 		when(torrent.isSingleFile()).thenReturn(true);
 		
-		TorrentFileWriter writer = new TorrentFileWriter(baseDir, torrent);
+		PieceWriter writer = new PieceWriter(baseDir, torrent);
 		writer.reserve();
 		File file = new File(baseDir + "/legalfile.mp3");
 		assertEquals(1024, file.length());
@@ -58,7 +58,7 @@ public class FileWriterTests {
 		when(torrent.getFiles()).thenReturn(files);
 		when(torrent.isSingleFile()).thenReturn(false);
 		
-		TorrentFileWriter writer = new TorrentFileWriter(baseDir, torrent);
+		PieceWriter writer = new PieceWriter(baseDir, torrent);
 		writer.reserve();
 		File file1 = new File(baseDir + "/files/file1/file1.mp3");
 		File file2 = new File(baseDir + "/files/file2/file2.mp4");
@@ -84,7 +84,7 @@ public class FileWriterTests {
 		when(p.getIndex()).thenReturn(0);
 		when(p.getBytes()).thenReturn("test".getBytes());
 		
-		TorrentFileWriter writer = new TorrentFileWriter(baseDir, torrent);
+		PieceWriter writer = new PieceWriter(baseDir, torrent);
 		writer.reserve();
 		writer.writePiece(p);
 		File file = new File(baseDir + "/test.txt");
@@ -109,7 +109,7 @@ public class FileWriterTests {
 		when(p.getIndex()).thenReturn(1);
 		when(p.getBytes()).thenReturn("test".getBytes());
 		
-		TorrentFileWriter writer = new TorrentFileWriter(baseDir, torrent);
+		PieceWriter writer = new PieceWriter(baseDir, torrent);
 		writer.reserve();
 		writer.writePiece(p);
 		File file = new File(baseDir + "/test.txt");
@@ -137,7 +137,7 @@ public class FileWriterTests {
 		when(p.getIndex()).thenReturn(4);
 		when(p.getBytes()).thenReturn("test".getBytes());
 		
-		TorrentFileWriter writer = new TorrentFileWriter(baseDir, torrent);
+		PieceWriter writer = new PieceWriter(baseDir, torrent);
 		writer.reserve();
 		writer.writePiece(p);
 
@@ -166,7 +166,7 @@ public class FileWriterTests {
 		when(p.getIndex()).thenReturn(1);
 		when(p.getBytes()).thenReturn("test1test2".getBytes());
 		
-		TorrentFileWriter writer = new TorrentFileWriter(baseDir, torrent);
+		PieceWriter writer = new PieceWriter(baseDir, torrent);
 		writer.reserve();
 		writer.writePiece(p);
 
@@ -200,7 +200,7 @@ public class FileWriterTests {
 		when(p.getIndex()).thenReturn(0);
 		when(p.getBytes()).thenReturn("ABCDEFGHIJKLMNOPQRSTUVWXYZ".getBytes());
 		
-		TorrentFileWriter writer = new TorrentFileWriter(baseDir, torrent);
+		PieceWriter writer = new PieceWriter(baseDir, torrent);
 		writer.reserve();
 		writer.writePiece(p);
 
@@ -242,7 +242,7 @@ public class FileWriterTests {
 		when(p2.getIndex()).thenReturn(1);
 		when(p2.getBytes()).thenReturn("NOPQRSTUVWXYZ".getBytes());
 		
-		TorrentFileWriter writer = new TorrentFileWriter(baseDir, torrent);
+		PieceWriter writer = new PieceWriter(baseDir, torrent);
 		writer.reserve();
 		writer.writePiece(p1);
 		writer.writePiece(p2);
@@ -264,7 +264,6 @@ public class FileWriterTests {
 	
 	@After
 	public void tearDown() throws IOException{
-		System.out.println("tearing down...");
 		String baseDir = this.getClass().getResource("/").getFile();
 		baseDir = URLDecoder.decode(baseDir, "utf-8");
 		baseDir = new File(baseDir).getPath();

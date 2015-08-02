@@ -178,6 +178,6 @@ public class BencodingTests {
 		assertFalse(file.isSingleFile());
 		assertEquals(2, file.getFiles().size());
 		assertEquals("path3/path4", file.getFiles().get(1).getPath());
-		assertEquals(-1, file.getLength());
+		assertEquals(400, file.getLength());
 	}
 }

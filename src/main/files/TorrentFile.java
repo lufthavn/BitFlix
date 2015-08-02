@@ -153,11 +153,18 @@ public class TorrentFile{
 	}
 	
 	/**
-	 * @return the length of the file in bytes. Only used in single file mode. Returns -1 if torrent is in multi file mode
+	 * @return in single file mode, returns the length of the file in bytes. Returns the total length of all files if torrent is in multi file mode
 	 */
 	public long getLength() {
-		if(length == 0)
-			length = parseLength();
+		if(length == 0){
+			if(isSingleFile()){
+				length = parseLength();
+			}else{
+				for(FileInfo info : getFiles()){
+					length += info.getSize();
+				}
+			}
+		}
 		return length;
 	}
 	
@@ -211,7 +218,7 @@ public class TorrentFile{
 	}
 
 	public boolean isSingleFile() {
-		return getFiles() == null && getLength() > -1;
+		return getFiles() == null;
 	}
 
 }
