@@ -5,12 +5,12 @@ import static org.mockito.Mockito.*;
 
 import java.nio.ByteBuffer;
 
-import messages.Bitfield;
-import messages.Have;
+import messages.BitfieldMessage;
+import messages.HaveMessage;
 import messages.Message;
 import messages.MessageType;
-import messages.Piece;
-import messages.Request;
+import messages.PieceMessage;
+import messages.RequestMessage;
 import models.Peer;
 
 import org.junit.Test;
@@ -47,7 +47,7 @@ public class MessageTests {
 		buffer.put((byte) 4);
 		buffer.putInt(1337);
 		
-		Have m = (Have)Message.fromBytes(buffer);
+		HaveMessage m = (HaveMessage)Message.fromBytes(buffer);
 		assertEquals(MessageType.HAVE, m.getType());
 		assertEquals(1337, m.getIndex());
 	}
@@ -59,7 +59,7 @@ public class MessageTests {
 		buffer.put((byte) 5);
 		buffer.put("abcde".getBytes());
 		
-		Bitfield m = (Bitfield) Message.fromBytes(buffer);
+		BitfieldMessage m = (BitfieldMessage) Message.fromBytes(buffer);
 		assertEquals(MessageType.BITFIELD, m.getType());
 		assertArrayEquals("abcde".getBytes(), m.getBitField());
 	}
@@ -73,7 +73,7 @@ public class MessageTests {
 		buffer.putInt(5);
 		buffer.putInt(16000);
 		
-		Request m = (Request)Message.fromBytes(buffer);
+		RequestMessage m = (RequestMessage)Message.fromBytes(buffer);
 		assertEquals(MessageType.REQUEST, m.getType());
 		assertEquals(1337, m.getIndex());
 		assertEquals(5, m.getBegin());
@@ -89,7 +89,7 @@ public class MessageTests {
 		buffer.putInt(0);
 		buffer.put("abcdefghijklmnopqrstuvwxyz".getBytes());
 		
-		Piece m = (Piece) Message.fromBytes(buffer);
+		PieceMessage m = (PieceMessage) Message.fromBytes(buffer);
 		assertEquals(MessageType.PIECE, m.getType());
 		assertArrayEquals("abcdefghijklmnopqrstuvwxyz".getBytes(), m.getBlock());
 	}

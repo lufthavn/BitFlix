@@ -2,11 +2,11 @@ package messages;
 
 import java.nio.ByteBuffer;
 
-public class Have extends Message{
+public class HaveMessage extends Message{
 	
 	private int index;
 
-	public Have(int index){
+	public HaveMessage(int index){
 		this.index = index;
 	}
 	

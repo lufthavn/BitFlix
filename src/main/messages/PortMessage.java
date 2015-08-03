@@ -2,11 +2,11 @@ package messages;
 
 import java.nio.ByteBuffer;
 
-public class Port extends Message {
+public class PortMessage extends Message {
 
 	private int port;
 	
-	public Port(int port){
+	public PortMessage(int port){
 		this.port = port;
 	}
 

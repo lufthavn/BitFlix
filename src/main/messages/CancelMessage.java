@@ -2,13 +2,13 @@ package messages;
 
 import java.nio.ByteBuffer;
 
-public class Cancel extends Message {
+public class CancelMessage extends Message {
 	
 	private int index;
 	private int begin;
 	private int length;
 	
-	public Cancel(int index, int begin, int length) {
+	public CancelMessage(int index, int begin, int length) {
 		this.index = index;
 		this.begin = begin;
 		this.length = length;

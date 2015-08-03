@@ -2,13 +2,13 @@ package messages;
 
 import java.nio.ByteBuffer;
 
-public class ChokeStatus extends Message {
-
+public class InterestMessage extends Message {
+	
 	private int id;
 
-	public ChokeStatus(int id){
-		if(id != 0 && id != 1){
-			throw new IllegalArgumentException("A choke status' id must either 0 or 1");
+	public InterestMessage(int id){
+		if(id != 2 && id != 3){
+			throw new IllegalArgumentException("An interest status' id must either 2 or 3");
 		}
 		this.id = id;
 	}
@@ -20,9 +20,9 @@ public class ChokeStatus extends Message {
 
 	@Override
 	public ByteBuffer getBytes() {
+		
 		return ByteBuffer.allocate(5)
 				.putInt(1) //length
 				.put((byte) id);
 	}
-
 }

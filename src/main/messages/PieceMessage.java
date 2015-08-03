@@ -2,13 +2,13 @@ package messages;
 
 import java.nio.ByteBuffer;
 
-public class Piece extends Message {
+public class PieceMessage extends Message {
 
 	private int index;
 	private int begin;
 	private byte[] block;
 	
-	public Piece(int index, int begin, byte[] block) {
+	public PieceMessage(int index, int begin, byte[] block) {
 		this.index = index;
 		this.begin = begin;
 		this.block = block;

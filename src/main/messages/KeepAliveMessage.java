@@ -2,7 +2,7 @@ package messages;
 
 import java.nio.ByteBuffer;
 
-public class KeepAlive extends Message{
+public class KeepAliveMessage extends Message{
 
 	@Override
 	public MessageType getType() {

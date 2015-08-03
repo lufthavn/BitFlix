@@ -2,7 +2,7 @@ package messages;
 
 import java.nio.ByteBuffer;
 
-public class Request extends Message{
+public class RequestMessage extends Message{
 	
 	private int index;
 	private int begin;
@@ -13,7 +13,7 @@ public class Request extends Message{
 	 * @param begin the zero-based byte offset within the piece
 	 * @param length the requested length
 	 */
-	public Request(int index, int begin, int length) {
+	public RequestMessage(int index, int begin, int length) {
 		this.index = index;
 		this.begin = begin;
 		this.length = length;
