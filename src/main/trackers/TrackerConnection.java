@@ -10,7 +10,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
-import models.Peer;
+import peers.Peer;
 import files.TorrentFile;
 import trackers.packets.*;
 

@@ -18,7 +18,6 @@ import java.util.Queue;
 import java.util.Set;
 
 import files.TorrentFile;
-import models.Peer;
 
 public class PeerPool {
 

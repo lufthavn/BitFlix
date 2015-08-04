@@ -1,4 +1,4 @@
-package models;
+package peers;
 
 import java.math.BigInteger;
 import java.net.InetAddress;

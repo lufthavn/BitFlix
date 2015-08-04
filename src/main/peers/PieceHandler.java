@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import util.BitfieldHelper;
-import models.Peer;
 import files.Piece;
 import files.TorrentFile;
 

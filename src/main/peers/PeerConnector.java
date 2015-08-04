@@ -24,7 +24,6 @@ import messages.KeepAliveMessage;
 import messages.Message;
 import messages.PieceMessage;
 import messages.RequestMessage;
-import models.Peer;
 
 public class PeerConnector implements IPeerConnector {
 	

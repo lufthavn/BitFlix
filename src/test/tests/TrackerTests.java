@@ -17,10 +17,9 @@ import java.util.List;
 
 import javax.xml.bind.DatatypeConverter;
 
-import models.Peer;
-
 import org.junit.Test;
 
+import peers.Peer;
 import trackers.Action;
 import trackers.ITrackerSocket;
 import trackers.Tracker;

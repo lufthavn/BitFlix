@@ -2,10 +2,10 @@ package tests;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
-import models.Peer;
 
 import org.junit.Test;
 
+import peers.Peer;
 import peers.PieceHandler;
 import util.Hashing;
 import files.Block;

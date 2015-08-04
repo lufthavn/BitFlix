@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-import models.Peer;
+import peers.Peer;
 
 public class TrackerPool extends ArrayList<TrackerConnection> {
 	

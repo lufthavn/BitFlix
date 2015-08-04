@@ -14,9 +14,9 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import peers.Peer;
 import peers.PeerConnector;
 import peers.PeerPool;
-import models.Peer;
 import trackers.PeerRequester;
 import trackers.Tracker;
 import trackers.TrackerConnection;
@@ -35,7 +35,7 @@ public class Program {
 	public static void main(String[] args) throws InterruptedException, IOException
 	{
 		//Decoder decoder = new Decoder("path/to/torrent/file.torrent");
-		Decoder decoder = new Decoder("C:/Users/Tobias/Desktop/sick_gangsta_rap.torrent");
+		Decoder decoder = new Decoder(args[0]);
 		TorrentFile file = new TorrentFile(decoder);
 		TrackerSocket socket = null;
 		try {
@@ -72,7 +72,7 @@ public class Program {
 		peerThread.start();
 		
 		BlockingQueue<Piece> pieceQueue = new LinkedBlockingQueue<Piece>();
-		TorrentFileWriter writer = new TorrentFileWriter("path\\to\\torrent", file, pieceQueue);
+		TorrentFileWriter writer = new TorrentFileWriter(args[1], file, pieceQueue);
 		Thread writerThread = new Thread(writer, "WriterThread");
 		writerThread.setDaemon(true);
 		writerThread.start();

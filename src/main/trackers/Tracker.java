@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Random;
 import java.io.*;
 
-import models.Peer;
+import peers.Peer;
 import trackers.packets.*;
 
 public class Tracker {

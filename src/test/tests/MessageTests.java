@@ -11,10 +11,10 @@ import messages.Message;
 import messages.MessageType;
 import messages.PieceMessage;
 import messages.RequestMessage;
-import models.Peer;
 
 import org.junit.Test;
 
+import peers.Peer;
 import files.TorrentFile;
 import util.BitfieldHelper;
 
