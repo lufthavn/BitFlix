@@ -1,5 +1,6 @@
 package peers;
 
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -67,12 +68,28 @@ public class PieceHandler {
 	}
 	
 	public int nextPieceIndex(){
-		for(int i = 0; i < pieceAmount; i++){
-			if(!BitfieldHelper.isAtIndex(haveBitfield, i) && !isAssigned(i)){
-				return i;
+		int remainder = pieceAmount % 8;
+		
+		BitSet set = BitSet.valueOf(haveBitfield);
+		int nextBitIndex = pieceAmount + remainder - 1;
+		boolean done = false;
+		while(!done){
+			
+			nextBitIndex = set.previousClearBit(nextBitIndex);
+			if(nextBitIndex < remainder){
+				return -1;
 			}
+			
+			int pieceIndex = pieceAmount - nextBitIndex + remainder - 1;
+			if(isAssigned(pieceIndex)){
+				nextBitIndex--;
+			}else{
+				done = true;
+				nextBitIndex = pieceIndex;
+			}
+			
 		}
-		return -1;
+		return nextBitIndex;
 	}
 	
 	public void unassign(Peer peer){

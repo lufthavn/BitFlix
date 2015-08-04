@@ -81,4 +81,84 @@ public class PieceTests {
 		int remaining = handler.remainingBlocks(peer);
 		assertEquals(4, remaining);
 	}
+	
+	@Test
+	public void canCalculateNextPiece(){
+		TorrentFile file = mock(TorrentFile.class);
+		when(file.getLength()).thenReturn((long) 400);
+		when(file.getPieceLength()).thenReturn(100);
+		byte[][] pieces =  new byte[4][];
+		pieces[0] = new byte[20];
+		pieces[1] = new byte[20];
+		pieces[2] = new byte[20];
+		pieces[3] = new byte[20];
+		when(file.getPieces()).thenReturn(pieces);
+		Peer peer = mock(Peer.class);
+		
+		PieceHandler handler = new PieceHandler(file, 30);
+		
+		int n0 = handler.nextPieceIndex();
+		handler.assign(peer, 0);
+		
+		int n1 = handler.nextPieceIndex();
+		Piece piece = handler.finishPiece(peer);
+		handler.assign(peer, 1);
+		
+		int n2 = handler.nextPieceIndex();
+		handler.finishPiece(peer);
+		
+		handler.assign(peer, 2);
+		handler.finishPiece(peer);
+		
+		handler.assign(peer, 3);
+		handler.finishPiece(peer);
+		
+		int n3 = handler.nextPieceIndex();
+		
+		assertEquals(0, piece.getIndex());
+		assertEquals(0, n0);
+		assertEquals(1, n1);
+		assertEquals(2, n2);
+		assertEquals(-1, n3);
+	}
+	
+	@Test
+	public void canSelfAssignPieces(){
+		TorrentFile file = mock(TorrentFile.class);
+		when(file.getLength()).thenReturn((long) 400);
+		when(file.getPieceLength()).thenReturn(100);
+		byte[][] pieces =  new byte[4][];
+		pieces[0] = new byte[20];
+		pieces[1] = new byte[20];
+		pieces[2] = new byte[20];
+		pieces[3] = new byte[20];
+		when(file.getPieces()).thenReturn(pieces);
+		Peer peer = mock(Peer.class);
+		
+		PieceHandler handler = new PieceHandler(file, 30);
+		
+		int n0 = handler.nextPieceIndex();
+		handler.assign(peer);
+		
+		int n1 = handler.nextPieceIndex();
+		Piece piece = handler.finishPiece(peer);
+		handler.assign(peer);
+		
+		int n2 = handler.nextPieceIndex();
+		handler.finishPiece(peer);
+		
+		handler.assign(peer);
+		handler.finishPiece(peer);
+		
+		handler.assign(peer);
+		handler.finishPiece(peer);
+		
+		int n3 = handler.nextPieceIndex();
+		
+		assertEquals(0, piece.getIndex());
+		assertEquals(0, n0);
+		assertEquals(1, n1);
+		assertEquals(2, n2);
+		assertEquals(-1, n3);
+	}
 }
