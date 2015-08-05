@@ -18,7 +18,7 @@ public abstract class Message {
 		if(length == 0){
 			message = new KeepAliveMessage();
 		}else{
-			int id = (byte)buffer.get();
+			int id = buffer.get();
 			
 			switch(id){
 				case 0:

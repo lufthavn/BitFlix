@@ -7,7 +7,6 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 import messages.Message;
-import util.BitfieldHelper;
 import files.TorrentFile;
 
 public class Peer {
@@ -15,7 +14,7 @@ public class Peer {
 	private InetAddress address;
 	private int port;
 	private String peerId;
-	private byte[] haveBitfield = null;
+	private HaveBitfield haveBitfield;
 	private long timeOfLastMessage;
 
 	private boolean handshakeSent;
@@ -105,7 +104,7 @@ public class Peer {
 	 * @param file the metainfo of the torrent this peer participates in.
 	 */
 	public void initializeHaveBitfield(TorrentFile file) {
-		initializeHaveBitfield(file.getLength());
+		initializeHaveBitfield(file.getPieces().length);
 	}
 	
 	/**
@@ -113,8 +112,7 @@ public class Peer {
 	 * @param length the total length of the torrent this peer participates in.
 	 */
 	public void initializeHaveBitfield(long length) {
-		int arrayLength = (int) Math.ceil((double)length / 8);
-		haveBitfield = new byte[arrayLength];
+		haveBitfield = new HaveBitfield(length);
 	}
 	
 	
@@ -122,14 +120,14 @@ public class Peer {
 	 * Sets the specified bitfield as this peers HAVE bitfield. Should be used when a peer sends a <a href="https://wiki.theory.org/BitTorrentSpecification#bitfield:_.3Clen.3D0001.2BX.3E.3Cid.3D5.3E.3Cbitfield.3E">BITFIELD</a> message.
 	 * @param bitfield the bitfield received from a peer.
 	 */
-	public void setHaveBitfield(byte[] bitfield){
+	public void setHaveBitfield(HaveBitfield bitfield){
 		haveBitfield = bitfield;
 	}
 	
 	/**
 	 * @return this peers HAVE bitfield, used to track a peers piece availability. Returns null if the bitfield hasn't been initialized.
 	 */
-	public byte[] getHaveBitField() {
+	public HaveBitfield getHaveBitField() {
 		return haveBitfield;
 	}
 
@@ -257,13 +255,13 @@ public class Peer {
 	 * @param index the index of the piece
 	 */
 	public void setHasPiece(int index) {
-		BitfieldHelper.setBit(haveBitfield, index);
+		haveBitfield.setHasPiece(index);
 	}
 	
 	public boolean hasPiece(int index){
 		if(haveBitfield == null){
 			return false;
 		}
-		return BitfieldHelper.isAtIndex(haveBitfield, index);
+		return haveBitfield.hasPiece(index);
 	}
 }

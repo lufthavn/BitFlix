@@ -1,7 +1,5 @@
 package trackers.packets;
 
-import java.net.URI;
-import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;

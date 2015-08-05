@@ -2,16 +2,12 @@ package trackers;
 
 import java.io.IOException;
 import java.net.*;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
 import peers.Peer;
-import files.TorrentFile;
 import trackers.packets.*;
 
 public class TrackerConnection {

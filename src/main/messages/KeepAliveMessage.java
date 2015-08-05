@@ -9,6 +9,7 @@ public class KeepAliveMessage extends Message{
 		return MessageType.KEEPALIVE;
 	}
 
+	@Override
 	public ByteBuffer getBytes(){
 		return (ByteBuffer) ByteBuffer.allocate(4).putInt(0).position(0);
 	}

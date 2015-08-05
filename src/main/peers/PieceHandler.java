@@ -16,7 +16,7 @@ public class PieceHandler {
 	private int blockSize;
 	private final int pieceAmount;
 	private final Map<Peer, Piece> pieces;
-	private final byte[] haveBitfield;
+	private final HaveBitfield haveBitfield;
 
 	public PieceHandler(TorrentFile file) {
 		this(file, BLOCK_SIZE);
@@ -27,8 +27,7 @@ public class PieceHandler {
 		pieces = new HashMap<Peer, Piece>();
 		this.blockSize = blockSize;
 		this.pieceAmount = file.getPieces().length;
-		int bitfieldSize = (int) Math.ceil((double)pieceAmount / 8);
-		this.haveBitfield = new byte[bitfieldSize];
+		this.haveBitfield = new HaveBitfield(pieceAmount);
 	}
 	
 	public int getBlockSize(){
@@ -67,28 +66,35 @@ public class PieceHandler {
 	}
 	
 	public int nextPieceIndex(){
-		int remainder = pieceAmount % 8;
+//		int remainder = pieceAmount % 8;
+//		
+//		BitSet set = BitSet.valueOf(haveBitfield);
+//		int nextBitIndex = pieceAmount + remainder - 1;
+//		boolean done = false;
+//		while(!done){
+//			
+//			nextBitIndex = set.previousClearBit(nextBitIndex);
+//			if(nextBitIndex < remainder){
+//				return -1;
+//			}
+//			
+//			int pieceIndex = pieceAmount - nextBitIndex + remainder - 1;
+//			if(isAssigned(pieceIndex)){
+//				nextBitIndex--;
+//			}else{
+//				done = true;
+//				nextBitIndex = pieceIndex;
+//			}
+//			
+//		}
+//		return nextBitIndex;
 		
-		BitSet set = BitSet.valueOf(haveBitfield);
-		int nextBitIndex = pieceAmount + remainder - 1;
-		boolean done = false;
-		while(!done){
-			
-			nextBitIndex = set.previousClearBit(nextBitIndex);
-			if(nextBitIndex < remainder){
-				return -1;
+		for(int i = 0; i < pieceAmount; i++){
+			if(!haveBitfield.hasPiece(i) && !isAssigned(i)){
+				return i;
 			}
-			
-			int pieceIndex = pieceAmount - nextBitIndex + remainder - 1;
-			if(isAssigned(pieceIndex)){
-				nextBitIndex--;
-			}else{
-				done = true;
-				nextBitIndex = pieceIndex;
-			}
-			
 		}
-		return nextBitIndex;
+		return -1;
 	}
 	
 	public void unassign(Peer peer){
@@ -97,15 +103,23 @@ public class PieceHandler {
 	
 	public Piece finishPiece(Peer peer){
 		Piece piece = pieces.remove(peer);
-		BitfieldHelper.setBit(haveBitfield, piece.getIndex());
+		haveBitfield.setHasPiece(piece.getIndex());
 		return piece;
 	}
 
 	public int remainingBlocks(Peer peer) {
 		Piece piece = pieces.get(peer);
 		return piece.remainingBlocks();
-	}
+	} 
 
+	public boolean isFinished(){
+		return haveBitfield.isFinished();
+	}
+	
+	public HaveBitfield getHaveBitField(){
+		return haveBitfield;
+	}
+	
 	/**
 	 * @param peer
 	 * @return the piece this peer is assigned to, or null, if this peer isn't assigned to any piece.
@@ -130,4 +144,6 @@ public class PieceHandler {
 		}
 		return false;
 	}
+	
+
 }

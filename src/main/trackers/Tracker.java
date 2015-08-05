@@ -3,11 +3,7 @@ package trackers;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
-import java.io.*;
-
 import peers.Peer;
-import trackers.packets.*;
 
 public class Tracker {
 	

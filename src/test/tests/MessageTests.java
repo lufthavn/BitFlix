@@ -14,6 +14,7 @@ import messages.RequestMessage;
 
 import org.junit.Test;
 
+import peers.HaveBitfield;
 import peers.Peer;
 import files.TorrentFile;
 import util.BitfieldHelper;
@@ -61,7 +62,7 @@ public class MessageTests {
 		
 		BitfieldMessage m = (BitfieldMessage) Message.fromBytes(buffer);
 		assertEquals(MessageType.BITFIELD, m.getType());
-		assertArrayEquals("abcde".getBytes(), m.getBitField());
+		assertArrayEquals("abcde".getBytes(), m.getBitField().getBytes());
 	}
 	
 	@Test
@@ -98,29 +99,25 @@ public class MessageTests {
 	public void canInterpretBitfield(){
 		int i = 1333333337; //01001111 01111001 00001101 01011001
 		byte[] bitfield = ByteBuffer.allocate(4).putInt(i).array();
-		boolean isAvailable = BitfieldHelper.isAtIndex(bitfield, 9); // bit at index 9 is 1, so should return true.
+		boolean isAvailable = new HaveBitfield(bitfield).hasPiece(9); // bit at index 9 is 1, so should return true.
 		assertTrue(isAvailable);
 	}
 	
 	@Test
 	public void canSetBitField(){
-		TorrentFile file = mock(TorrentFile.class);
-		when(file.getLength()).thenReturn((long) 225);
 		Peer peer = new Peer("192.30.252.128", 34);
-		peer.initializeHaveBitfield(file);
-		byte[] bitfield = peer.getHaveBitField();
-		assertEquals(29, bitfield.length);
+		peer.initializeHaveBitfield(225);
+		HaveBitfield bitfield = peer.getHaveBitField();
+		assertEquals(29, bitfield.getBytes().length);
 	}
 	
 	@Test
 	public void canSetHasPiece(){
-		TorrentFile file = mock(TorrentFile.class);
-		when(file.getLength()).thenReturn((long) 225);
 		Peer peer = new Peer("192.30.252.128", 34);
-		peer.initializeHaveBitfield(file); //29 empty bytes
-		peer.setHasPiece(7); //10000000 00000000
+		peer.initializeHaveBitfield(225); //29 empty bytes
+		peer.setHasPiece(7); //00000001 00000000
 		peer.setHasPiece(12);//00000000 00001000
-		assertEquals(1, peer.getHaveBitField()[0]);
-		assertEquals(8, peer.getHaveBitField()[1]);
+		assertEquals(1, peer.getHaveBitField().getBytes()[0]);
+		assertEquals(8, peer.getHaveBitField().getBytes()[1]);
 	}
 }

@@ -57,6 +57,7 @@ public class PeerConnector implements IPeerConnector {
 		}
 	}
 	
+	@Override
 	public void connectToPeers() throws IOException{
 		selector.select(5000);
 		Set<SelectionKey> keys = selector.selectedKeys();
@@ -315,11 +316,8 @@ public class PeerConnector implements IPeerConnector {
 		case BITFIELD:{
 				BitfieldMessage bitfield = (BitfieldMessage)message;
 				peer.setHaveBitfield(bitfield.getBitField());
-				int remainder = file.getPieces().length % 8;
-				long totalBits = (bitfield.getBitField().length * 8) - remainder;
-				long setBits = BitSet.valueOf(bitfield.getBitField()).cardinality();
 	
-				double percentage =  setBits * 100 / totalBits;
+				double percentage =  peer.getHaveBitField().percentComplete();
 				if(percentage >= 97){
 					//yo, this peer is gooood.
 					InterestMessage i = new InterestMessage(2);
@@ -345,12 +343,9 @@ public class PeerConnector implements IPeerConnector {
 			}
 			peer.setHasPiece(have.getIndex());
 			
-			byte[] bitfield = peer.getHaveBitField();
-			int remainder = file.getPieces().length % 8;
-			long totalBits = (bitfield.length * 8) - remainder;
-			long setBits = BitSet.valueOf(bitfield).cardinality();
+			HaveBitfield bitfield = peer.getHaveBitField();
 
-			double percentage =  setBits * 100 / totalBits;
+			double percentage =  bitfield.percentComplete();
 			if(percentage >= 97){
 				//yo, this peer is gooood.
 				InterestMessage i = new InterestMessage(2);
@@ -389,7 +384,7 @@ public class PeerConnector implements IPeerConnector {
 				}else{
 					handler.unassign(peer);
 				}
-				System.out.println("piece checked. Hash success: " + success);
+				System.out.println("piece checked. Hash success: " + success + ". Progress: " + handler.getHaveBitField().percentComplete() + "%.");
 			}
 
 			break;

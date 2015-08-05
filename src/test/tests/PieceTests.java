@@ -3,6 +3,10 @@ package tests;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+
 import org.junit.Test;
 
 import peers.Peer;
@@ -160,5 +164,21 @@ public class PieceTests {
 		assertEquals(1, n1);
 		assertEquals(2, n2);
 		assertEquals(-1, n3);
+	}
+	
+	@Test
+	public void canFinishTorrent() throws URISyntaxException{
+		URL res = this.getClass().getResource("../resources/BigBuckBunny.torrent");
+		String torrent = new URI(res.toExternalForm()).getPath();
+		TorrentFile file = new TorrentFile(torrent);
+		
+		Peer peer = mock(Peer.class);
+		PieceHandler handler = new PieceHandler(file);
+		
+		for(int i = 0; i < handler.getPieceAmount(); i++){
+			handler.assign(peer);
+			handler.finishPiece(peer);
+		}
+		assertTrue(handler.isFinished());
 	}
 }

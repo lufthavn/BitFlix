@@ -3,9 +3,6 @@ package trackers.packets;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
-import java.net.InetAddress;
-import java.net.URI;
-import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 
 import trackers.Action;
