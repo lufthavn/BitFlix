@@ -1,14 +1,11 @@
 package program;
 
 import java.io.IOException;
-import java.net.ConnectException;
 import java.net.SocketException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.nio.channels.ClosedChannelException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -22,7 +19,6 @@ import trackers.Tracker;
 import trackers.TrackerConnection;
 import trackers.TrackerPool;
 import trackers.TrackerSocket;
-import bencoding.Decoder;
 import files.Piece;
 import files.TorrentFile;
 import files.TorrentFileWriter;
@@ -32,11 +28,10 @@ public class Program {
 	public Program() {
 	}
 	
-	public static void main(String[] args) throws InterruptedException, IOException
+	public static void main(String[] args) throws InterruptedException, IOException, URISyntaxException
 	{
 		//Decoder decoder = new Decoder("path/to/torrent/file.torrent");
-		Decoder decoder = new Decoder(args[0]);
-		TorrentFile file = new TorrentFile(decoder);
+		TorrentFile file = new TorrentFile(args[0]);
 		TrackerSocket socket = null;
 		try {
 			socket = new TrackerSocket();
