@@ -124,6 +124,7 @@ public class PeerConnector implements IPeerConnector {
 			if(!peer.isConnected()){
 				finishHandshake(key);
 				if(key.isValid()){
+					peer.addMessageToQueue(new BitfieldMessage(handler.getHaveBitField()));
 					System.out.println("connected to peer with id: " + peer.getPeerId());
 				}
 			}else{
@@ -359,6 +360,8 @@ public class PeerConnector implements IPeerConnector {
 			
 			break;
 		case INTERESTED:
+			peer.setInterestedInThis(true);
+			peer.addMessageToQueue(new ChokeMessage(1));
 			break;
 		case KEEPALIVE:
 			break;
@@ -375,6 +378,7 @@ public class PeerConnector implements IPeerConnector {
 				boolean success = piece.checkHash();
 				if(success){
 					Piece p = handler.finishPiece(peer);
+					addMessageToAllPeers(new HaveMessage(p.getIndex()));
 					try {
 						pieceQueue.put(p);
 					} catch (InterruptedException e) {
@@ -403,6 +407,14 @@ public class PeerConnector implements IPeerConnector {
 			break;
 		
 		}
+	}
+
+	private void addMessageToAllPeers(Message message) {
+		for(SelectionKey key : selector.keys()){
+			Peer peer = (Peer) key.attachment();
+			peer.addMessageToQueue(message);
+		}
+		
 	}
 
 	@Override
