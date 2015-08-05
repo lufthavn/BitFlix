@@ -61,9 +61,16 @@ public class HaveBitfield {
 	}
 
 	public boolean isFinished() {
-		for(int i = 0; i < length; i++){
-			if(!hasPiece(i)){
-				return false;
+		
+		byte lastByteValue = (byte) (-1 << Byte.SIZE - trailLength);
+		
+		for(int i = 0; i < bits.length; i++){
+			byte b = bits[i];
+			
+			if(b != (byte)-1){
+				if(i == bits.length - 1 && b != lastByteValue){
+					return false;
+				}
 			}
 		}
 		return true;
