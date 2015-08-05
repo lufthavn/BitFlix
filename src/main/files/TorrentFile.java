@@ -1,21 +1,11 @@
 package files;
 
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import trackers.Tracker;
 import util.Hashing;
 import bencoding.BDictionary;
 import bencoding.BElement;
@@ -42,6 +32,10 @@ public class TorrentFile{
 	public TorrentFile(Decoder decoder) {
 		//Since a torrent file consists of a single top level dictionary, we'll fetch this.
 		this.decoded = (BDictionary)decoder.decode().get(0);
+	}
+	
+	public TorrentFile(String path) throws URISyntaxException{
+		this(new Decoder(path));
 	}
 	
 	public byte[] getInfoHash()

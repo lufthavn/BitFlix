@@ -1,13 +1,11 @@
 package trackers.packets;
 
-import java.net.URI;
-import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
+import peers.Peer;
 import trackers.Action;
-import models.Peer;
 
 public class AnnounceResponse implements ITrackerResponse{
 

@@ -1,24 +1,9 @@
 package peers;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.SocketAddress;
-import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.SocketChannel;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.Queue;
-import java.util.Set;
-
 import files.TorrentFile;
-import models.Peer;
 
 public class PeerPool {
 
@@ -54,6 +39,8 @@ public class PeerPool {
 					if(peer != null){
 						connector.connect(peer);
 						amount--;
+					}else{
+						break;
 					}
 				}
 			}

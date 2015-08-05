@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Queue;
 
-import models.Peer;
+import peers.Peer;
 
 public class PeerRequester implements Runnable {
 

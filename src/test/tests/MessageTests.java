@@ -5,18 +5,18 @@ import static org.mockito.Mockito.*;
 
 import java.nio.ByteBuffer;
 
-import messages.Bitfield;
-import messages.Have;
+import messages.BitfieldMessage;
+import messages.HaveMessage;
 import messages.Message;
 import messages.MessageType;
-import messages.Piece;
-import messages.Request;
-import models.Peer;
+import messages.PieceMessage;
+import messages.RequestMessage;
 
 import org.junit.Test;
 
+import peers.HaveBitfield;
+import peers.Peer;
 import files.TorrentFile;
-import util.BitfieldHelper;
 
 public class MessageTests {
 
@@ -47,7 +47,7 @@ public class MessageTests {
 		buffer.put((byte) 4);
 		buffer.putInt(1337);
 		
-		Have m = (Have)Message.fromBytes(buffer);
+		HaveMessage m = (HaveMessage)Message.fromBytes(buffer);
 		assertEquals(MessageType.HAVE, m.getType());
 		assertEquals(1337, m.getIndex());
 	}
@@ -59,9 +59,9 @@ public class MessageTests {
 		buffer.put((byte) 5);
 		buffer.put("abcde".getBytes());
 		
-		Bitfield m = (Bitfield) Message.fromBytes(buffer);
+		BitfieldMessage m = (BitfieldMessage) Message.fromBytes(buffer);
 		assertEquals(MessageType.BITFIELD, m.getType());
-		assertArrayEquals("abcde".getBytes(), m.getBitField());
+		assertArrayEquals("abcde".getBytes(), m.getBitField().getBytes());
 	}
 	
 	@Test
@@ -73,7 +73,7 @@ public class MessageTests {
 		buffer.putInt(5);
 		buffer.putInt(16000);
 		
-		Request m = (Request)Message.fromBytes(buffer);
+		RequestMessage m = (RequestMessage)Message.fromBytes(buffer);
 		assertEquals(MessageType.REQUEST, m.getType());
 		assertEquals(1337, m.getIndex());
 		assertEquals(5, m.getBegin());
@@ -89,7 +89,7 @@ public class MessageTests {
 		buffer.putInt(0);
 		buffer.put("abcdefghijklmnopqrstuvwxyz".getBytes());
 		
-		Piece m = (Piece) Message.fromBytes(buffer);
+		PieceMessage m = (PieceMessage) Message.fromBytes(buffer);
 		assertEquals(MessageType.PIECE, m.getType());
 		assertArrayEquals("abcdefghijklmnopqrstuvwxyz".getBytes(), m.getBlock());
 	}
@@ -98,29 +98,25 @@ public class MessageTests {
 	public void canInterpretBitfield(){
 		int i = 1333333337; //01001111 01111001 00001101 01011001
 		byte[] bitfield = ByteBuffer.allocate(4).putInt(i).array();
-		boolean isAvailable = BitfieldHelper.isAtIndex(bitfield, 9); // bit at index 9 is 1, so should return true.
+		boolean isAvailable = new HaveBitfield(bitfield).hasPiece(9); // bit at index 9 is 1, so should return true.
 		assertTrue(isAvailable);
 	}
 	
 	@Test
 	public void canSetBitField(){
-		TorrentFile file = mock(TorrentFile.class);
-		when(file.getLength()).thenReturn((long) 225);
 		Peer peer = new Peer("192.30.252.128", 34);
-		peer.initializeHaveBitfield(file);
-		byte[] bitfield = peer.getHaveBitField();
-		assertEquals(29, bitfield.length);
+		peer.initializeHaveBitfield(225);
+		HaveBitfield bitfield = peer.getHaveBitField();
+		assertEquals(29, bitfield.getBytes().length);
 	}
 	
 	@Test
 	public void canSetHasPiece(){
-		TorrentFile file = mock(TorrentFile.class);
-		when(file.getLength()).thenReturn((long) 225);
 		Peer peer = new Peer("192.30.252.128", 34);
-		peer.initializeHaveBitfield(file); //29 empty bytes
-		peer.setHasPiece(7); //10000000 00000000
+		peer.initializeHaveBitfield(225); //29 empty bytes
+		peer.setHasPiece(7); //00000001 00000000
 		peer.setHasPiece(12);//00000000 00001000
-		assertEquals(1, peer.getHaveBitField()[0]);
-		assertEquals(8, peer.getHaveBitField()[1]);
+		assertEquals(1, peer.getHaveBitField().getBytes()[0]);
+		assertEquals(8, peer.getHaveBitField().getBytes()[1]);
 	}
 }

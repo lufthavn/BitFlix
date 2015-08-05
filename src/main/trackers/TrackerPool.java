@@ -6,11 +6,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-import models.Peer;
+import peers.Peer;
 
 public class TrackerPool extends ArrayList<TrackerConnection> {
 	

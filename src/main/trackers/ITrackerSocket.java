@@ -1,8 +1,6 @@
 package trackers;
 
 import java.io.IOException;
-import java.net.UnknownHostException;
-
 import trackers.packets.ITrackerRequest;
 import trackers.packets.ITrackerResponse;
 

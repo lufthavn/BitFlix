@@ -4,23 +4,17 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.SocketTimeoutException;
-import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import javax.xml.bind.DatatypeConverter;
-
-import models.Peer;
-
 import org.junit.Test;
 
+import peers.Peer;
 import trackers.Action;
 import trackers.ITrackerSocket;
 import trackers.Tracker;

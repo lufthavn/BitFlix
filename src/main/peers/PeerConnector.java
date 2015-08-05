@@ -16,14 +16,14 @@ import java.util.concurrent.BlockingQueue;
 import files.Block;
 import files.Piece;
 import files.TorrentFile;
-import messages.Bitfield;
-import messages.ChokeStatus;
-import messages.Have;
-import messages.InterestStatus;
-import messages.KeepAlive;
+import messages.BitfieldMessage;
+import messages.ChokeMessage;
+import messages.HaveMessage;
+import messages.InterestMessage;
+import messages.KeepAliveMessage;
 import messages.Message;
-import messages.Request;
-import models.Peer;
+import messages.PieceMessage;
+import messages.RequestMessage;
 
 public class PeerConnector implements IPeerConnector {
 	
@@ -57,6 +57,7 @@ public class PeerConnector implements IPeerConnector {
 		}
 	}
 	
+	@Override
 	public void connectToPeers() throws IOException{
 		selector.select(5000);
 		Set<SelectionKey> keys = selector.selectedKeys();
@@ -86,7 +87,7 @@ public class PeerConnector implements IPeerConnector {
 					Piece p = handler.getPiece(peer);
 					int begin = p.indexOfNextBlock();
 					
-					Message m = new Request(index, begin, p.nextBlockSize());
+					Message m = new RequestMessage(index, begin, p.nextBlockSize());
 					peer.addMessageToQueue(m);
 				}
 				
@@ -208,7 +209,7 @@ public class PeerConnector implements IPeerConnector {
 		SocketChannel channel = (SocketChannel) key.channel();
 		Peer peer = (Peer) key.attachment();
 		
-		ByteBuffer buffer = new KeepAlive().getBytes();
+		ByteBuffer buffer = new KeepAliveMessage().getBytes();
 		buffer.flip();
 		while(buffer.hasRemaining()){
 			try{
@@ -313,20 +314,17 @@ public class PeerConnector implements IPeerConnector {
 	private void handleMessage(Message message, Peer peer){
 		switch(message.getType()){
 		case BITFIELD:{
-				Bitfield bitfield = (Bitfield)message;
+				BitfieldMessage bitfield = (BitfieldMessage)message;
 				peer.setHaveBitfield(bitfield.getBitField());
-				int remainder = file.getPieces().length % 8;
-				long totalBits = (bitfield.getBitField().length * 8) - remainder;
-				long setBits = BitSet.valueOf(bitfield.getBitField()).cardinality();
 	
-				double percentage =  setBits * 100 / totalBits;
+				double percentage =  peer.getHaveBitField().percentComplete();
 				if(percentage >= 97){
 					//yo, this peer is gooood.
-					InterestStatus i = new InterestStatus(2);
+					InterestMessage i = new InterestMessage(2);
 					peer.addMessageToQueue(i);
 					peer.setInterested(true);
 				}else{
-					InterestStatus i = new InterestStatus(2);
+					InterestMessage i = new InterestMessage(2);
 					peer.setInterested(false);
 					peer.addMessageToQueue(i);
 				}
@@ -339,25 +337,22 @@ public class PeerConnector implements IPeerConnector {
 			peer.setChokingThis(true);
 			break;
 		case HAVE:
-			Have have = (Have)message;
+			HaveMessage have = (HaveMessage)message;
 			if(peer.getHaveBitField() == null){
 				peer.initializeHaveBitfield(file);
 			}
 			peer.setHasPiece(have.getIndex());
 			
-			byte[] bitfield = peer.getHaveBitField();
-			int remainder = file.getPieces().length % 8;
-			long totalBits = (bitfield.length * 8) - remainder;
-			long setBits = BitSet.valueOf(bitfield).cardinality();
+			HaveBitfield bitfield = peer.getHaveBitField();
 
-			double percentage =  setBits * 100 / totalBits;
+			double percentage =  bitfield.percentComplete();
 			if(percentage >= 97){
 				//yo, this peer is gooood.
-				InterestStatus i = new InterestStatus(2);
+				InterestMessage i = new InterestMessage(2);
 				peer.addMessageToQueue(i);
 				peer.setInterested(true);
 			}else{
-				InterestStatus i = new InterestStatus(2);
+				InterestMessage i = new InterestMessage(2);
 				peer.setInterested(false);
 				peer.addMessageToQueue(i);
 			}
@@ -369,12 +364,12 @@ public class PeerConnector implements IPeerConnector {
 			break;
 		case PIECE:
 			Piece piece = handler.getPiece(peer);
-			messages.Piece data = (messages.Piece)message;
+			PieceMessage data = (PieceMessage)message;
 			Block block = new Block(data.getBlock());
 			piece.addBlock(data.getBegin() / handler.getBlockSize(), block);
 			System.out.println(piece.indexOfNextBlock() + " : " + piece.nextBlockSize());
 			if(piece.indexOfNextBlock() >= 0){
-				Request r = new Request(piece.getIndex(), piece.indexOfNextBlock(), piece.nextBlockSize());
+				RequestMessage r = new RequestMessage(piece.getIndex(), piece.indexOfNextBlock(), piece.nextBlockSize());
 				peer.addMessageToQueue(r);
 			}else{
 				boolean success = piece.checkHash();
@@ -389,7 +384,7 @@ public class PeerConnector implements IPeerConnector {
 				}else{
 					handler.unassign(peer);
 				}
-				System.out.println("piece checked. Hash success: " + success);
+				System.out.println("piece checked. Hash success: " + success + ". Progress: " + handler.getHaveBitField().percentComplete() + "%.");
 			}
 
 			break;
@@ -399,7 +394,7 @@ public class PeerConnector implements IPeerConnector {
 			break;
 		case UNCHOKE:
 			peer.setChokingThis(false);
-			ChokeStatus c = new ChokeStatus(1);
+			ChokeMessage c = new ChokeMessage(1);
 			peer.addMessageToQueue(c);
 			break;
 		case UNINTERESTED:

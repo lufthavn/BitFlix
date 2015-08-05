@@ -1,10 +1,9 @@
 package peers;
 
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Map;
 
-import util.BitfieldHelper;
-import models.Peer;
 import files.Piece;
 import files.TorrentFile;
 
@@ -16,7 +15,7 @@ public class PieceHandler {
 	private int blockSize;
 	private final int pieceAmount;
 	private final Map<Peer, Piece> pieces;
-	private final byte[] haveBitfield;
+	private final HaveBitfield haveBitfield;
 
 	public PieceHandler(TorrentFile file) {
 		this(file, BLOCK_SIZE);
@@ -27,8 +26,7 @@ public class PieceHandler {
 		pieces = new HashMap<Peer, Piece>();
 		this.blockSize = blockSize;
 		this.pieceAmount = file.getPieces().length;
-		int bitfieldSize = (int) Math.ceil((double)pieceAmount / 8);
-		this.haveBitfield = new byte[bitfieldSize];
+		this.haveBitfield = new HaveBitfield(pieceAmount);
 	}
 	
 	public int getBlockSize(){
@@ -66,9 +64,9 @@ public class PieceHandler {
 		pieces.put(peer, piece);
 	}
 	
-	public int nextPieceIndex(){
+	public int nextPieceIndex(){		
 		for(int i = 0; i < pieceAmount; i++){
-			if(!BitfieldHelper.isAtIndex(haveBitfield, i) && !isAssigned(i)){
+			if(!haveBitfield.hasPiece(i) && !isAssigned(i)){
 				return i;
 			}
 		}
@@ -81,15 +79,23 @@ public class PieceHandler {
 	
 	public Piece finishPiece(Peer peer){
 		Piece piece = pieces.remove(peer);
-		BitfieldHelper.setBit(haveBitfield, piece.getIndex());
+		haveBitfield.setHasPiece(piece.getIndex());
 		return piece;
 	}
 
 	public int remainingBlocks(Peer peer) {
 		Piece piece = pieces.get(peer);
 		return piece.remainingBlocks();
-	}
+	} 
 
+	public boolean isFinished(){
+		return haveBitfield.isFinished();
+	}
+	
+	public HaveBitfield getHaveBitField(){
+		return haveBitfield;
+	}
+	
 	/**
 	 * @param peer
 	 * @return the piece this peer is assigned to, or null, if this peer isn't assigned to any piece.
@@ -114,4 +120,6 @@ public class PieceHandler {
 		}
 		return false;
 	}
+	
+
 }

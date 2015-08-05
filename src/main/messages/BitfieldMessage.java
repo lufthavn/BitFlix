@@ -2,11 +2,13 @@ package messages;
 
 import java.nio.ByteBuffer;
 
-public class Bitfield extends Message {
+import peers.HaveBitfield;
+
+public class BitfieldMessage extends Message {
 
 	private byte[] bitField;
 
-	public Bitfield(byte[] bitField){
+	public BitfieldMessage(byte[] bitField){
 		this.bitField = bitField;
 	}
 	
@@ -15,8 +17,8 @@ public class Bitfield extends Message {
 		return MessageType.BITFIELD;
 	}
 	
-	public byte[] getBitField(){
-		return bitField;
+	public HaveBitfield getBitField(){
+		return new HaveBitfield(bitField);
 	}
 
 	@Override

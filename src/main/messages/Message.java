@@ -16,21 +16,21 @@ public abstract class Message {
 		buffer.position(0);
 		int length = buffer.getInt();
 		if(length == 0){
-			message = new KeepAlive();
+			message = new KeepAliveMessage();
 		}else{
-			int id = (byte)buffer.get();
+			int id = buffer.get();
 			
 			switch(id){
 				case 0:
 				case 1:
-					message = new ChokeStatus(id);
+					message = new ChokeMessage(id);
 				break;
 				case 2:
 				case 3:
-					message = new InterestStatus(id);
+					message = new InterestMessage(id);
 				break;
 				case 4:
-					message = new Have(buffer.getInt());
+					message = new HaveMessage(buffer.getInt());
 				break;
 				case 5:{
 					int bitFieldOffset = buffer.position() - 4;
@@ -39,14 +39,14 @@ public abstract class Message {
 					byte[] bitField = new byte[bitFieldLength];
 					buffer.get(bitField, 0, bitFieldLength);
 					
-					message = new Bitfield(bitField);
+					message = new BitfieldMessage(bitField);
 				}
 				break;
 				case 6:{
 					int index = buffer.getInt();
 					int begin = buffer.getInt();
 					int blockLength = buffer.getInt();
-					message = new Request(index, begin, blockLength);
+					message = new RequestMessage(index, begin, blockLength);
 				}
 				break;
 				case 7:{
@@ -58,7 +58,7 @@ public abstract class Message {
 					byte[] block = new byte[blockLength];
 					buffer.get(block, 0, blockLength);
 					
-					message = new Piece(index, begin, block);
+					message = new PieceMessage(index, begin, block);
 				}
 				break;
 				case 8:{
@@ -66,11 +66,11 @@ public abstract class Message {
 					int begin = buffer.getInt();
 					int blockLength = buffer.getInt();
 					
-					message = new Cancel(index, begin, blockLength);
+					message = new CancelMessage(index, begin, blockLength);
 				}
 				break;
 				case 9:
-					message = new Port(buffer.getInt());
+					message = new PortMessage(buffer.getInt());
 				break;
 				default:
 					message = null;

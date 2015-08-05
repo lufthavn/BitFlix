@@ -1,28 +1,24 @@
 package program;
 
 import java.io.IOException;
-import java.net.ConnectException;
 import java.net.SocketException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.nio.channels.ClosedChannelException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import peers.Peer;
 import peers.PeerConnector;
 import peers.PeerPool;
-import models.Peer;
 import trackers.PeerRequester;
 import trackers.Tracker;
 import trackers.TrackerConnection;
 import trackers.TrackerPool;
 import trackers.TrackerSocket;
-import bencoding.Decoder;
 import files.Piece;
 import files.TorrentFile;
 import files.TorrentFileWriter;
@@ -32,11 +28,10 @@ public class Program {
 	public Program() {
 	}
 	
-	public static void main(String[] args) throws InterruptedException, IOException
+	public static void main(String[] args) throws InterruptedException, IOException, URISyntaxException
 	{
 		//Decoder decoder = new Decoder("path/to/torrent/file.torrent");
-		Decoder decoder = new Decoder("C:/Users/Tobias/Desktop/sick_gangsta_rap.torrent");
-		TorrentFile file = new TorrentFile(decoder);
+		TorrentFile file = new TorrentFile(args[0]);
 		TrackerSocket socket = null;
 		try {
 			socket = new TrackerSocket();
@@ -72,7 +67,7 @@ public class Program {
 		peerThread.start();
 		
 		BlockingQueue<Piece> pieceQueue = new LinkedBlockingQueue<Piece>();
-		TorrentFileWriter writer = new TorrentFileWriter("path\\to\\torrent", file, pieceQueue);
+		TorrentFileWriter writer = new TorrentFileWriter(args[1], file, pieceQueue);
 		Thread writerThread = new Thread(writer, "WriterThread");
 		writerThread.setDaemon(true);
 		writerThread.start();
