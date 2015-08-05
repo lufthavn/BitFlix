@@ -4,7 +4,6 @@ import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Map;
 
-import util.BitfieldHelper;
 import files.Piece;
 import files.TorrentFile;
 

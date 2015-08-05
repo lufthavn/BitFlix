@@ -17,7 +17,6 @@ import org.junit.Test;
 import peers.HaveBitfield;
 import peers.Peer;
 import files.TorrentFile;
-import util.BitfieldHelper;
 
 public class MessageTests {
 
