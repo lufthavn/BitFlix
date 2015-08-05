@@ -64,30 +64,7 @@ public class PieceHandler {
 		pieces.put(peer, piece);
 	}
 	
-	public int nextPieceIndex(){
-//		int remainder = pieceAmount % 8;
-//		
-//		BitSet set = BitSet.valueOf(haveBitfield);
-//		int nextBitIndex = pieceAmount + remainder - 1;
-//		boolean done = false;
-//		while(!done){
-//			
-//			nextBitIndex = set.previousClearBit(nextBitIndex);
-//			if(nextBitIndex < remainder){
-//				return -1;
-//			}
-//			
-//			int pieceIndex = pieceAmount - nextBitIndex + remainder - 1;
-//			if(isAssigned(pieceIndex)){
-//				nextBitIndex--;
-//			}else{
-//				done = true;
-//				nextBitIndex = pieceIndex;
-//			}
-//			
-//		}
-//		return nextBitIndex;
-		
+	public int nextPieceIndex(){		
 		for(int i = 0; i < pieceAmount; i++){
 			if(!haveBitfield.hasPiece(i) && !isAssigned(i)){
 				return i;
