@@ -180,5 +180,7 @@ public class PieceTests {
 			handler.finishPiece(peer);
 		}
 		assertTrue(handler.isFinished());
+		double percent = handler.getHaveBitField().percentComplete();
+		assertEquals(100, (int)percent);
 	}
 }

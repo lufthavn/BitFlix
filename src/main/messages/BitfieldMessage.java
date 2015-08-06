@@ -8,8 +8,8 @@ public class BitfieldMessage extends Message {
 
 	private byte[] bitField;
 
-	public BitfieldMessage(HaveBitfield haveBitfield){
-		this.bitField = haveBitfield.getBytes();
+	public BitfieldMessage(byte[] bits){
+		this.bitField = bits;
 	}
 	
 	@Override
@@ -17,8 +17,8 @@ public class BitfieldMessage extends Message {
 		return MessageType.BITFIELD;
 	}
 	
-	public HaveBitfield getBitField(){
-		return new HaveBitfield(bitField);
+	public byte[] getBitField(){
+		return bitField;
 	}
 
 	@Override

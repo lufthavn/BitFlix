@@ -61,7 +61,7 @@ public class MessageTests {
 		
 		BitfieldMessage m = (BitfieldMessage) Message.fromBytes(buffer);
 		assertEquals(MessageType.BITFIELD, m.getType());
-		assertArrayEquals("abcde".getBytes(), m.getBitField().getBytes());
+		assertArrayEquals("abcde".getBytes(), m.getBitField());
 	}
 	
 	@Test
@@ -98,7 +98,7 @@ public class MessageTests {
 	public void canInterpretBitfield(){
 		int i = 1333333337; //01001111 01111001 00001101 01011001
 		byte[] bitfield = ByteBuffer.allocate(4).putInt(i).array();
-		boolean isAvailable = new HaveBitfield(bitfield).hasPiece(9); // bit at index 9 is 1, so should return true.
+		boolean isAvailable = new HaveBitfield(bitfield, 32).hasPiece(9); // bit at index 9 is 1, so should return true.
 		assertTrue(isAvailable);
 	}
 	

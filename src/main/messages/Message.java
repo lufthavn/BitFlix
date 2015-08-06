@@ -2,6 +2,8 @@ package messages;
 
 import java.nio.ByteBuffer;
 
+import peers.HaveBitfield;
+
 public abstract class Message {
 	
 	public abstract MessageType getType();
@@ -36,10 +38,10 @@ public abstract class Message {
 					int bitFieldOffset = buffer.position() - 4;
 					
 					int bitFieldLength = length - bitFieldOffset;
-					byte[] bitField = new byte[bitFieldLength];
-					buffer.get(bitField, 0, bitFieldLength);
+					byte[] bits = new byte[bitFieldLength];
+					buffer.get(bits, 0, bitFieldLength);
 					
-					message = new BitfieldMessage(bitField);
+					message = new BitfieldMessage(bits);
 				}
 				break;
 				case 6:{

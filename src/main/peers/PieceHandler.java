@@ -82,6 +82,11 @@ public class PieceHandler {
 		haveBitfield.setHasPiece(piece.getIndex());
 		return piece;
 	}
+	
+	public void finishPiece(Piece piece){
+		pieces.values().remove(piece);
+		haveBitfield.setHasPiece(piece.getIndex());
+	}
 
 	public int remainingBlocks(Peer peer) {
 		Piece piece = pieces.get(peer);
