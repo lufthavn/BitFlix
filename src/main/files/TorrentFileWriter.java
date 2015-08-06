@@ -4,17 +4,19 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 
+import peers.IPieceQueue;
+
 public class TorrentFileWriter implements Runnable {
 
 	private boolean isRunning;
 	
-	private final BlockingQueue<Piece> pieceQueue;
+	private final IPieceQueue pieceQueue;
 	private final PieceWriter writer;
 	
 	private long totalLength;
 	private long totalWritten;
 	
-	public TorrentFileWriter(String baseDir, TorrentFile file, BlockingQueue<Piece> queue) throws FileNotFoundException{
+	public TorrentFileWriter(String baseDir, TorrentFile file, IPieceQueue queue) throws FileNotFoundException{
 		this.pieceQueue = queue;
 		this.writer = new PieceWriter(baseDir, file);
 		this.isRunning = false;
@@ -28,10 +30,10 @@ public class TorrentFileWriter implements Runnable {
 		try {
 			writer.reserve();
 			while(isRunning){
-				Piece p = pieceQueue.take();
+				Piece p = pieceQueue.takePieceToWrite();
 				writer.writePiece(p);
 				totalWritten += p.getBytes().length;
-				
+				pieceQueue.addWrittenPiece(p);
 				if(totalWritten == totalLength){
 					System.out.println("all done with writing file");
 					isRunning = false;
@@ -41,9 +43,6 @@ public class TorrentFileWriter implements Runnable {
 				}
 			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

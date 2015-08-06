@@ -11,9 +11,11 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import peers.IPieceQueue;
 import peers.Peer;
 import peers.PeerConnector;
 import peers.PeerPool;
+import peers.PieceQueue;
 import trackers.PeerRequester;
 import trackers.Tracker;
 import trackers.TrackerConnection;
@@ -66,7 +68,7 @@ public class Program {
 		peerThread.setDaemon(true);
 		peerThread.start();
 		
-		BlockingQueue<Piece> pieceQueue = new LinkedBlockingQueue<Piece>();
+		IPieceQueue pieceQueue = new PieceQueue();
 		TorrentFileWriter writer = new TorrentFileWriter(args[1], file, pieceQueue);
 		Thread writerThread = new Thread(writer, "WriterThread");
 		writerThread.setDaemon(true);
@@ -85,7 +87,6 @@ public class Program {
 				System.out.println("Connection error: " + e.getMessage());
 				e.printStackTrace();
 			}
-			Thread.sleep(20);
 		}
 //		System.out.println("All done.");
 //		System.exit(0);

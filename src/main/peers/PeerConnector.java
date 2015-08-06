@@ -34,9 +34,9 @@ public class PeerConnector implements IPeerConnector {
 	
 	private PieceHandler handler;
 	
-	private final BlockingQueue<Piece> pieceQueue;
+	private final IPieceQueue pieceQueue;
 
-	public PeerConnector(TorrentFile file, BlockingQueue<Piece> pieceQueue) throws IOException {
+	public PeerConnector(TorrentFile file, IPieceQueue pieceQueue) throws IOException {
 		selector  = Selector.open();
 		this.file = file;
 		this.infohash = file.getInfoHash();
@@ -62,6 +62,13 @@ public class PeerConnector implements IPeerConnector {
 		selector.select(5000);
 		Set<SelectionKey> keys = selector.selectedKeys();
 		Iterator<SelectionKey> iterator = keys.iterator();
+		
+		for(Piece p : pieceQueue.getWrittenPieces()){
+			handler.finishPiece(p);
+			addMessageToAllPeers(new HaveMessage(p.getIndex()));
+			System.out.println("piece successfully written to hard drive. Progress: " + handler.getHaveBitField().percentComplete() + "%.");
+		}
+		
 		while(iterator.hasNext()){
 			SelectionKey key = iterator.next();
 			SocketChannel channel = (SocketChannel) key.channel();
@@ -82,7 +89,7 @@ public class PeerConnector implements IPeerConnector {
 			
 			if(!peer.isChokingThis()){
 				int index = handler.nextPieceIndex();
-				if(peer.hasPiece(index) && !handler.isAssigned(index) && !handler.isAssigned(peer)){
+				if(peer.hasPiece(index) && !handler.isAssigned(peer)){
 					handler.assign(peer);
 					Piece p = handler.getPiece(peer);
 					int begin = p.indexOfNextBlock();
@@ -90,17 +97,6 @@ public class PeerConnector implements IPeerConnector {
 					Message m = new RequestMessage(index, begin, p.nextBlockSize());
 					peer.addMessageToQueue(m);
 				}
-				
-//				int lastPieceIndex = handler.getPieceAmount() - 1;
-//				if(!handler.isAssigned(peer) && peer.hasPiece(lastPieceIndex) && !handler.isAssigned(lastPieceIndex)){
-//					handler.assign(peer, lastPieceIndex);
-//					Piece p = handler.getPiece(peer);
-//					int begin = p.indexOfNextBlock();
-//					int bs = p.nextBlockSize();
-//					
-//					Message m = new Request(lastPieceIndex, begin, bs);
-//					peer.addMessageToQueue(m);
-//				}
 				
 			}
 			
@@ -124,7 +120,7 @@ public class PeerConnector implements IPeerConnector {
 			if(!peer.isConnected()){
 				finishHandshake(key);
 				if(key.isValid()){
-					peer.addMessageToQueue(new BitfieldMessage(handler.getHaveBitField()));
+					peer.addMessageToQueue(new BitfieldMessage(handler.getHaveBitField().getBytes()));
 					System.out.println("connected to peer with id: " + peer.getPeerId());
 				}
 			}else{
@@ -316,7 +312,9 @@ public class PeerConnector implements IPeerConnector {
 		switch(message.getType()){
 		case BITFIELD:{
 				BitfieldMessage bitfield = (BitfieldMessage)message;
-				peer.setHaveBitfield(bitfield.getBitField());
+				byte[] bits = bitfield.getBitField();
+				
+				peer.setHaveBitfield(new HaveBitfield(bits, this.file.getPieces().length));
 	
 				double percentage =  peer.getHaveBitField().percentComplete();
 				if(percentage >= 97){
@@ -335,6 +333,7 @@ public class PeerConnector implements IPeerConnector {
 		case CANCEL:
 			break;
 		case CHOKE:
+			handler.unassign(peer);
 			peer.setChokingThis(true);
 			break;
 		case HAVE:
@@ -377,18 +376,10 @@ public class PeerConnector implements IPeerConnector {
 			}else{
 				boolean success = piece.checkHash();
 				if(success){
-					Piece p = handler.finishPiece(peer);
-					addMessageToAllPeers(new HaveMessage(p.getIndex()));
-					try {
-						pieceQueue.put(p);
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+					pieceQueue.putPieceToWrite(piece);
 				}else{
 					handler.unassign(peer);
 				}
-				System.out.println("piece checked. Hash success: " + success + ". Progress: " + handler.getHaveBitField().percentComplete() + "%.");
 			}
 
 			break;
@@ -409,10 +400,16 @@ public class PeerConnector implements IPeerConnector {
 		}
 	}
 
+	/**
+	 * adds a message to send to all the peers this client is currently connected to (completed the handshake)
+	 * @param message
+	 */
 	private void addMessageToAllPeers(Message message) {
 		for(SelectionKey key : selector.keys()){
 			Peer peer = (Peer) key.attachment();
-			peer.addMessageToQueue(message);
+			if(peer.isConnected()){
+				peer.addMessageToQueue(message);
+			}
 		}
 		
 	}
