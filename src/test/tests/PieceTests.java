@@ -181,6 +181,6 @@ public class PieceTests {
 		}
 		assertTrue(handler.isFinished());
 		double percent = handler.getHaveBitField().percentComplete();
-		assertEquals(100, (int)percent);
+		assertEquals(100, percent, 0);
 	}
 }
