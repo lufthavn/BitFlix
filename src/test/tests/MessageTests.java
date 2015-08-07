@@ -103,6 +103,17 @@ public class MessageTests {
 	}
 	
 	@Test
+	public void canCalculatePercentage(){
+		byte[] bytes = new byte[4];
+		bytes[0] = (byte) 0b01010001;
+		bytes[1] = (byte) 0b11010010;
+		bytes[2] = (byte) 0b10010101;
+		bytes[3] = (byte) 0b11100100;
+		double percent = new HaveBitfield(bytes, 30).percentComplete();
+		assertEquals(50, percent, 0);
+	}
+	
+	@Test
 	public void canSetBitField(){
 		Peer peer = new Peer("192.30.252.128", 34);
 		peer.initializeHaveBitfield(225);
