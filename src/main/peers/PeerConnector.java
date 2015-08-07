@@ -48,6 +48,7 @@ public class PeerConnector implements IPeerConnector {
 	public void connect(Peer peer) throws IOException {
 		try{
 			SocketChannel channel = SocketChannel.open();
+			channel.socket().setSoTimeout(10000);
 			channel.configureBlocking(false);
 			channel.connect(new InetSocketAddress(peer.getAddress(), peer.getPort()));
 			
@@ -285,6 +286,7 @@ public class PeerConnector implements IPeerConnector {
 	}
 	
 	private byte[] readFromSocket(SocketChannel channel, int length){
+		long start = System.currentTimeMillis();
 		ByteBuffer buffer = ByteBuffer.allocate(length);
 		int read = 0;
 		boolean isValid = true;
@@ -301,6 +303,7 @@ public class PeerConnector implements IPeerConnector {
 				isValid = false;
 			}
 		}
+		System.out.println("Done recieving piece. Seconds taken: " + (System.currentTimeMillis() - start) + ". succeeded: " + isValid);
 		if(isValid){
 			return buffer.array();
 		}else{
@@ -317,15 +320,13 @@ public class PeerConnector implements IPeerConnector {
 				peer.setHaveBitfield(new HaveBitfield(bits, this.file.getPieces().length));
 	
 				double percentage =  peer.getHaveBitField().percentComplete();
-				if(percentage >= 97){
+				if(percentage >= 95){
 					//yo, this peer is gooood.
 					InterestMessage i = new InterestMessage(2);
 					peer.addMessageToQueue(i);
 					peer.setInterested(true);
 				}else{
-					InterestMessage i = new InterestMessage(2);
 					peer.setInterested(false);
-					peer.addMessageToQueue(i);
 				}
 				System.out.println("A peer sent a BITFIELD request, and has " + percentage + "% of the pieces");
 			}
@@ -366,6 +367,11 @@ public class PeerConnector implements IPeerConnector {
 			break;
 		case PIECE:
 			Piece piece = handler.getPiece(peer);
+			//if the peer sends a block for a piece it isn't assigned to, or a block to a piece that is complete, it should be removed.
+			if(piece == null || piece.remainingBlocks() == 0){
+				handler.unassign(peer);
+				return;
+			}
 			PieceMessage data = (PieceMessage)message;
 			Block block = new Block(data.getBlock());
 			piece.addBlock(data.getBegin() / handler.getBlockSize(), block);

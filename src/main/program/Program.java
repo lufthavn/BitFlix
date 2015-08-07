@@ -74,7 +74,7 @@ public class Program {
 		writerThread.setDaemon(true);
 		writerThread.start();
 		
-		PeerPool p = new PeerPool(file, peers, new PeerConnector(file, pieceQueue), 10);
+		PeerPool p = new PeerPool(file, peers, new PeerConnector(file, pieceQueue), 30);
 		
 		for(;;){
 			try{
