@@ -9,10 +9,21 @@ public abstract class Message {
 	public abstract MessageType getType();
 	public abstract ByteBuffer getBytes();
 	
+	
+	/**
+	 * parses the passed byte array into a Message object. Returns null if the message is malformed.
+	 * @param bytes the bytes this message consists of
+	 * @return the message
+	 */
 	public static Message fromBytes(byte[] bytes){
 		return fromBytes(ByteBuffer.wrap(bytes));
 	}
 	
+	/**
+	 * parses the buffer into a Message object. Returns null if the message is malformed.
+	 * @param buffer the buffer wrapping the bytes this message consists of
+	 * @return the message
+	 */
 	public static Message fromBytes(ByteBuffer buffer){
 		Message message;
 		buffer.position(0);

@@ -15,6 +15,7 @@ import messages.RequestMessage;
 import org.junit.Test;
 
 import peers.HaveBitfield;
+import peers.MessageHandler;
 import peers.Peer;
 import files.TorrentFile;
 
@@ -129,5 +130,39 @@ public class MessageTests {
 		peer.setHasPiece(12);//00000000 00001000
 		assertEquals(1, peer.getHaveBitField().getBytes()[0]);
 		assertEquals(8, peer.getHaveBitField().getBytes()[1]);
+	}
+	
+	@Test
+	public void canParseMessageFromPeer(){
+		MessageHandler handler = new MessageHandler();
+		Peer peer = mock(Peer.class);
+		
+		ByteBuffer message1 = ByteBuffer.allocate(13)
+				.putInt(35)
+				.put((byte) 7)
+				.putInt(0)
+				.putInt(0);
+		message1.position(0);
+		
+		ByteBuffer message2 = ByteBuffer.allocate(26)
+				.put("abcdefghijklmnopqrstuvwxyz".getBytes());
+		message2.position(0);
+		
+		handler.newMessage(peer, 35);
+		ByteBuffer buffer = handler.bufferForPeer(peer);
+		buffer.put(message1);
+		buffer.put(message2);
+		Message message = handler.messageForPeer(peer);
+		
+		assertEquals(MessageType.PIECE, message.getType());
+		assertArrayEquals("abcdefghijklmnopqrstuvwxyz".getBytes(), ((PieceMessage)message).getBlock());
+		
+	}
+	
+	@Test
+	public void peerReady(){
+		MessageHandler handler = new MessageHandler();
+		Peer peer = mock(Peer.class);
+		assertTrue(handler.ready(peer));
 	}
 }

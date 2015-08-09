@@ -32,7 +32,8 @@ public class PeerConnector implements IPeerConnector {
 	private byte[] infohash;
 	private TorrentFile file;
 	
-	private PieceHandler handler;
+	private PieceHandler pieceHandler;
+	private MessageHandler messageHandler;
 	
 	private final IPieceQueue pieceQueue;
 
@@ -40,7 +41,8 @@ public class PeerConnector implements IPeerConnector {
 		selector  = Selector.open();
 		this.file = file;
 		this.infohash = file.getInfoHash();
-		handler = new PieceHandler(file);
+		pieceHandler = new PieceHandler(file);
+		messageHandler = new MessageHandler();
 		this.pieceQueue = pieceQueue;
 	}
 
@@ -65,9 +67,9 @@ public class PeerConnector implements IPeerConnector {
 		Iterator<SelectionKey> iterator = keys.iterator();
 		
 		for(Piece p : pieceQueue.getWrittenPieces()){
-			handler.finishPiece(p);
+			pieceHandler.finishPiece(p);
 			addMessageToAllPeers(new HaveMessage(p.getIndex()));
-			System.out.println("piece successfully written to hard drive. Progress: " + handler.getHaveBitField().percentComplete() + "%.");
+			System.out.println("piece successfully written to hard drive. Progress: " + pieceHandler.getHaveBitField().percentComplete() + "%.");
 		}
 		
 		while(iterator.hasNext()){
@@ -89,10 +91,10 @@ public class PeerConnector implements IPeerConnector {
 			}
 			
 			if(!peer.isChokingThis()){
-				int index = handler.nextPieceIndex();
-				if(peer.hasPiece(index) && !handler.isAssigned(peer)){
-					handler.assign(peer);
-					Piece p = handler.getPiece(peer);
+				int index = pieceHandler.nextPieceIndex();
+				if(peer.hasPiece(index) && !pieceHandler.isAssigned(peer)){
+					pieceHandler.assign(peer);
+					Piece p = pieceHandler.getPiece(peer);
 					int begin = p.indexOfNextBlock();
 					
 					Message m = new RequestMessage(index, begin, p.nextBlockSize());
@@ -121,7 +123,7 @@ public class PeerConnector implements IPeerConnector {
 			if(!peer.isConnected()){
 				finishHandshake(key);
 				if(key.isValid()){
-					peer.addMessageToQueue(new BitfieldMessage(handler.getHaveBitField().getBytes()));
+					peer.addMessageToQueue(new BitfieldMessage(pieceHandler.getHaveBitField().getBytes()));
 					System.out.println("connected to peer with id: " + peer.getPeerId());
 				}
 			}else{
@@ -242,32 +244,33 @@ public class PeerConnector implements IPeerConnector {
 	 */
 	private Message receiveMessage(SelectionKey key){
 		SocketChannel channel = (SocketChannel) key.channel();
+		Peer peer = (Peer) key.attachment();
 		
 		//get the length of the message
-		int length = readLength(channel);
-		if(length < 0){
-			removeConnection(key);
-			return null;
+		if(messageHandler.ready(peer)){
+			int length = readLength(channel);
+			if(length < 0){
+				removeConnection(key);
+				return null;
+			}
+			messageHandler.newMessage(peer, length);
 		}
 		
 		//read the actual message
-		byte[] message = readFromSocket(channel, length);
-		if(message == null){
+		boolean success = readFromSocket(channel, messageHandler.bufferForPeer(peer));
+		if(!success){
 			removeConnection(key);
 			return null;
 		}
-		
-		//parse the received bytes to a Message object
-		ByteBuffer buffer = ByteBuffer.allocate(4 + message.length);
-		buffer.putInt(length);
-		buffer.put(message);
-		Message m = Message.fromBytes(buffer);
-		return m;
+		if(messageHandler.messageComplete(peer)){
+			return messageHandler.messageForPeer(peer);
+		}
+		return null;
 	}
 	
 	private void removeConnection(SelectionKey key) {
 		System.out.println("removing peer with address " + ((Peer)key.attachment()).getAddress());
-		handler.unassign((Peer)key.attachment());
+		pieceHandler.unassign((Peer)key.attachment());
 		try {
 			key.channel().close();
 		} catch (IOException e) {
@@ -285,8 +288,15 @@ public class PeerConnector implements IPeerConnector {
 		return ByteBuffer.wrap(bytes).getInt(0);
 	}
 	
+	/**
+	 * Reads the specified amount of bytes from the channel. 
+	 * This method blocks until all the bytes have been read. Is therefore inefficient for large messages, and should only be used 
+	 * for very small ones.
+	 * @param channel the channel to read from.
+	 * @param length the amount of bytes to read from this channel.
+	 * @return the read bytes
+	 */
 	private byte[] readFromSocket(SocketChannel channel, int length){
-		long start = System.currentTimeMillis();
 		ByteBuffer buffer = ByteBuffer.allocate(length);
 		int read = 0;
 		boolean isValid = true;
@@ -303,12 +313,30 @@ public class PeerConnector implements IPeerConnector {
 				isValid = false;
 			}
 		}
-		System.out.println("Done recieving piece. Seconds taken: " + (System.currentTimeMillis() - start) + ". succeeded: " + isValid);
 		if(isValid){
 			return buffer.array();
 		}else{
 			return null;
 		}
+	}
+	
+	/**
+	 * @param channel
+	 * @param buffer
+	 * @return true if the read was successful, false if not. If the read was unsuccessful, this connection should be terminated.
+	 */
+	private boolean readFromSocket(SocketChannel channel, ByteBuffer buffer){
+		int read = 0;
+		boolean isValid = true;
+		try{
+			read = channel.read(buffer);
+			isValid = read >= 0;
+		}catch(IOException e){
+			//TODO: logging
+			isValid = false;
+		}
+		
+		return isValid;
 	}
 	
 	private void handleMessage(Message message, Peer peer){
@@ -334,7 +362,7 @@ public class PeerConnector implements IPeerConnector {
 		case CANCEL:
 			break;
 		case CHOKE:
-			handler.unassign(peer);
+			pieceHandler.unassign(peer);
 			peer.setChokingThis(true);
 			break;
 		case HAVE:
@@ -366,15 +394,15 @@ public class PeerConnector implements IPeerConnector {
 		case KEEPALIVE:
 			break;
 		case PIECE:
-			Piece piece = handler.getPiece(peer);
+			Piece piece = pieceHandler.getPiece(peer);
 			//if the peer sends a block for a piece it isn't assigned to, or a block to a piece that is complete, it should be removed.
 			if(piece == null || piece.remainingBlocks() == 0){
-				handler.unassign(peer);
+				pieceHandler.unassign(peer);
 				return;
 			}
 			PieceMessage data = (PieceMessage)message;
 			Block block = new Block(data.getBlock());
-			piece.addBlock(data.getBegin() / handler.getBlockSize(), block);
+			piece.addBlock(data.getBegin() / pieceHandler.getBlockSize(), block);
 			System.out.println(piece.indexOfNextBlock() + " : " + piece.nextBlockSize());
 			if(piece.indexOfNextBlock() >= 0){
 				RequestMessage r = new RequestMessage(piece.getIndex(), piece.indexOfNextBlock(), piece.nextBlockSize());
@@ -384,7 +412,7 @@ public class PeerConnector implements IPeerConnector {
 				if(success){
 					pieceQueue.putPieceToWrite(piece);
 				}else{
-					handler.unassign(peer);
+					pieceHandler.unassign(peer);
 				}
 			}
 
