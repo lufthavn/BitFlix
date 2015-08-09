@@ -4,7 +4,7 @@ import java.util.List;
 
 import files.Piece;
 
-public interface IPieceQueue {
+public interface IPieceTaskBuffer {
 
 	public void putPieceToWrite(Piece piece);
 

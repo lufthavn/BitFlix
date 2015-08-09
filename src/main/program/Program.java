@@ -11,11 +11,11 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import peers.IPieceQueue;
+import peers.IPieceTaskBuffer;
 import peers.Peer;
 import peers.PeerConnector;
 import peers.PeerPool;
-import peers.PieceQueue;
+import peers.PieceTaskBuffer;
 import trackers.PeerRequester;
 import trackers.Tracker;
 import trackers.TrackerConnection;
@@ -68,7 +68,7 @@ public class Program {
 		peerThread.setDaemon(true);
 		peerThread.start();
 		
-		IPieceQueue pieceQueue = new PieceQueue();
+		IPieceTaskBuffer pieceQueue = new PieceTaskBuffer();
 		TorrentFileWriter writer = new TorrentFileWriter(args[1], file, pieceQueue);
 		Thread writerThread = new Thread(writer, "WriterThread");
 		writerThread.setDaemon(true);

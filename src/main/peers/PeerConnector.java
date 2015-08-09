@@ -35,9 +35,9 @@ public class PeerConnector implements IPeerConnector {
 	private PieceHandler pieceHandler;
 	private MessageHandler messageHandler;
 	
-	private final IPieceQueue pieceQueue;
+	private final IPieceTaskBuffer pieceQueue;
 
-	public PeerConnector(TorrentFile file, IPieceQueue pieceQueue) throws IOException {
+	public PeerConnector(TorrentFile file, IPieceTaskBuffer pieceQueue) throws IOException {
 		selector  = Selector.open();
 		this.file = file;
 		this.infohash = file.getInfoHash();

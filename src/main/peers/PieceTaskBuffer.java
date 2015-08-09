@@ -9,12 +9,12 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import files.Piece;
 
-public class PieceQueue implements IPieceQueue {
+public class PieceTaskBuffer implements IPieceTaskBuffer {
 
 	private final BlockingQueue<Piece> writeQueue;
 	private final List<Piece> writtenPieces;
 	
-	public PieceQueue(){
+	public PieceTaskBuffer(){
 		this.writeQueue = new LinkedBlockingQueue<Piece>();
 		this.writtenPieces = Collections.synchronizedList(new ArrayList<Piece>());
 	}
