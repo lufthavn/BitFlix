@@ -4,26 +4,28 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+
+import files.tasks.Result;
+import files.tasks.Task;
 
 public class PieceTaskBuffer implements IPieceTaskBuffer {
 
-	private final BlockingQueue<Piece> writeQueue;
-	private final List<Piece> writtenPieces;
+	private final BlockingQueue<Task> taskQueue;
+	private final List<Result> results;
 	
 	public PieceTaskBuffer(){
-		this.writeQueue = new LinkedBlockingQueue<Piece>();
-		this.writtenPieces = Collections.synchronizedList(new ArrayList<Piece>());
+		this.taskQueue = new LinkedBlockingQueue<Task>();
+		this.results = Collections.synchronizedList(new ArrayList<Result>());
 	}
 	
 	/* (non-Javadoc)
 	 * @see peers.IPieceQueue#putPieceToWrite(files.Piece)
 	 */
 	@Override
-	public void putPieceToWrite(Piece piece){
+	public void addTask(Task task){
 		try {
-			writeQueue.put(piece);
+			taskQueue.put(task);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -34,9 +36,9 @@ public class PieceTaskBuffer implements IPieceTaskBuffer {
 	 * @see peers.IPieceQueue#takePieceToWrite()
 	 */
 	@Override
-	public Piece takePieceToWrite(){
+	public Task takeTask(){
 		try {
-			return writeQueue.take();
+			return taskQueue.take();
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -48,23 +50,23 @@ public class PieceTaskBuffer implements IPieceTaskBuffer {
 	 * @see peers.IPieceQueue#addWrittenPiece(files.Piece)
 	 */
 	@Override
-	public void addWrittenPiece(Piece piece){
-		writtenPieces.add(piece);
+	public void addResult(Result result){
+		results.add(result);
 	}
 	
 	/* (non-Javadoc)
 	 * @see peers.IPieceQueue#getWrittenePieces()
 	 */
 	@Override
-	public List<Piece> getWrittenPieces(){
-		ArrayList<Piece> pieces = new ArrayList<Piece>(writtenPieces.size());
-		synchronized(writtenPieces){
-			for(Piece p : writtenPieces){
-				pieces.add(p);
+	public List<Result> getCompletedTasks(){
+		ArrayList<Result> resultsToReturn = new ArrayList<Result>(results.size());
+		synchronized(results){
+			for(Result r : results){
+				resultsToReturn.add(r);
 			}
-			writtenPieces.clear();
+			results.clear();
 		}
-		return pieces;
+		return resultsToReturn;
 	}
 	
 

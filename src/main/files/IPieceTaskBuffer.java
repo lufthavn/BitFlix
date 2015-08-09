@@ -2,14 +2,17 @@ package files;
 
 import java.util.List;
 
+import files.tasks.Result;
+import files.tasks.Task;
+
 public interface IPieceTaskBuffer {
 
-	public void putPieceToWrite(Piece piece);
+	public void addTask(Task task);
 
-	public Piece takePieceToWrite();
+	public Task takeTask();
 
-	public void addWrittenPiece(Piece piece);
+	public void addResult(Result result);
 
-	public List<Piece> getWrittenPieces();
+	public List<Result> getCompletedTasks();
 
 }

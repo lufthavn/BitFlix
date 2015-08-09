@@ -17,6 +17,9 @@ import files.Block;
 import files.IPieceTaskBuffer;
 import files.Piece;
 import files.TorrentFile;
+import files.tasks.Result;
+import files.tasks.WriteResult;
+import files.tasks.WriteTask;
 import messages.BitfieldMessage;
 import messages.ChokeMessage;
 import messages.HaveMessage;
@@ -67,10 +70,19 @@ public class PeerConnector implements IPeerConnector {
 		Set<SelectionKey> keys = selector.selectedKeys();
 		Iterator<SelectionKey> iterator = keys.iterator();
 		
-		for(Piece p : pieceQueue.getWrittenPieces()){
-			pieceHandler.finishPiece(p);
-			addMessageToAllPeers(new HaveMessage(p.getIndex()));
-			System.out.println("piece successfully written to hard drive. Progress: " + pieceHandler.getHaveBitField().percentComplete() + "%.");
+		for(Result r : pieceQueue.getCompletedTasks()){
+			switch(r.getType()){
+			case READ:
+				break;
+			case WRITE:
+				Piece p = ((WriteResult)r).getPiece();
+				pieceHandler.finishPiece(p);
+				addMessageToAllPeers(new HaveMessage(p.getIndex()));
+				System.out.println("piece successfully written to hard drive. Progress: " + pieceHandler.getHaveBitField().percentComplete() + "%.");
+				break;
+			default:
+				break;}
+
 		}
 		
 		while(iterator.hasNext()){
@@ -411,7 +423,7 @@ public class PeerConnector implements IPeerConnector {
 			}else{
 				boolean success = piece.checkHash();
 				if(success){
-					pieceQueue.putPieceToWrite(piece);
+					pieceQueue.addTask(new WriteTask(piece));
 				}else{
 					pieceHandler.unassign(peer);
 				}
