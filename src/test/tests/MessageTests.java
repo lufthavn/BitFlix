@@ -137,8 +137,7 @@ public class MessageTests {
 		MessageHandler handler = new MessageHandler();
 		Peer peer = mock(Peer.class);
 		
-		ByteBuffer message1 = ByteBuffer.allocate(13)
-				.putInt(35)
+		ByteBuffer message1 = ByteBuffer.allocate(9)
 				.put((byte) 7)
 				.putInt(0)
 				.putInt(0);
@@ -149,7 +148,9 @@ public class MessageTests {
 		message2.position(0);
 		
 		handler.newMessage(peer, 35);
+		
 		ByteBuffer buffer = handler.bufferForPeer(peer);
+		
 		buffer.put(message1);
 		buffer.put(message2);
 		Message message = handler.messageForPeer(peer);
