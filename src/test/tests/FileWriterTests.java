@@ -5,6 +5,7 @@ import static org.mockito.Mockito.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.util.Arrays;
@@ -253,6 +254,51 @@ public class FileWriterTests {
 		assertEquals("KLMNOP", s2);
 		assertEquals("QRSTUVWXYZ", s3);
 		writer.close();
+	}
+	
+	@Test
+	public void canReadPiece() throws IOException{
+		String baseDir = this.getClass().getResource("/").getFile();
+		baseDir = URLDecoder.decode(baseDir, "utf-8");
+		baseDir = new File(baseDir).getPath();
+		
+		File file1 = new File(baseDir + "/files/file1/file1.txt");
+		File file2 = new File(baseDir + "/files/file2/file2.txt");
+		File file3 = new File(baseDir + "/files/file3/file3.txt");
+		
+		file1.getParentFile().mkdirs();
+		file1.createNewFile();
+		file2.getParentFile().mkdirs();
+		file2.createNewFile();
+		file3.getParentFile().mkdirs();
+		file3.createNewFile();
+		
+		Files.write(file1.toPath(), "ABCDEFGHIJLKMNOPQRSTUVWXYZ".getBytes());
+		Files.write(file2.toPath(), "ABCDEFGHIJLKM".getBytes());
+		Files.write(file3.toPath(), "NOPQRSTUVWXYZ".getBytes());
+		
+		TorrentFile torrent = mock(TorrentFile.class);
+		LinkedList<FileInfo> files = new LinkedList<FileInfo>();
+		files.add(new FileInfo("file1/file1.txt", 26));
+		files.add(new FileInfo("file2/file2.txt", 13));
+		files.add(new FileInfo("file3/file3.txt", 13));
+		when(torrent.getName()).thenReturn("files");
+		when(torrent.getFiles()).thenReturn(files);
+		when(torrent.getPieceLength()).thenReturn(20);
+		when(torrent.isSingleFile()).thenReturn(false);
+		
+		PieceWriter writer = new PieceWriter(baseDir, torrent);
+		
+		byte[] block1 = writer.read(0, 0, 10);
+		byte[] block2 = writer.read(1, 0, 12); 
+		byte[] block3 = writer.read(1, 3, 19);
+		byte[] block4 = writer.read(2, 0, 12);
+		
+		writer.close();
+		assertArrayEquals("ABCDEFGHIJ".getBytes(), block1);
+		assertArrayEquals("UVWXYZABCDEF".getBytes(), block2);
+		assertArrayEquals("XYZABCDEFGHIJLKMNOP".getBytes(), block3);
+		assertArrayEquals("OPQRSTUVWXYZ".getBytes(), block4);
 	}
 	
 	@After

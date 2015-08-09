@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -134,6 +135,31 @@ public class PieceWriter implements Closeable {
 		RandomAccessFile raf = prop.getFile();
 		raf.seek(startIndex);
 		raf.write(data);
+	}
+	
+	public byte[] read(int pieceIndex, int begin, int length) throws IOException{
+		ByteBuffer buffer = ByteBuffer.allocate(length);
+		
+		int startIndex = torrent.getPieceLength() * pieceIndex + begin;
+		int offset = 0;
+		Iterator<FileProperties> iterator = files.iterator();
+		FileProperties prop = iterator.next();
+		while((prop.getLength() - 1) + offset < startIndex ){
+			offset += prop.getLength();
+			prop = iterator.next();
+		}
+		
+		startIndex = startIndex - offset;
+		int fileIndex = files.indexOf(prop);
+		
+		while(buffer.hasRemaining()){
+			prop = files.get(fileIndex);
+			prop.getFile().getChannel().read(buffer, startIndex);
+			startIndex = 0;
+			fileIndex++;
+		}
+		
+		return buffer.array();
 	}
 
 	@Override

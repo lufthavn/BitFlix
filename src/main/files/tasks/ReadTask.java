@@ -4,11 +4,13 @@ public class ReadTask extends Task {
 
 	private int pieceIndex;
 	private int begin;
-
-	public ReadTask(int pieceIndex, int begin) {
+	private int length;
+	
+	public ReadTask(int pieceIndex, int begin, int length) {
 		super(TaskType.READ);
 		this.pieceIndex = pieceIndex;
 		this.begin = begin;
+		this.length = length;
 	}
 
 	/**
@@ -23,6 +25,13 @@ public class ReadTask extends Task {
 	 */
 	public int getBegin() {
 		return begin;
+	}
+	
+	/**
+	 * @return the length
+	 */
+	public int getLength() {
+		return length;
 	}
 
 }
