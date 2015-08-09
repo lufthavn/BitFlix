@@ -34,9 +34,10 @@ public class Piece {
 	 * @param index
 	 * @param b1
 	 */
-	public void addBlock(int index, Block b1) {
+	public void addBlock(Block block) {
+		int index = block.getBegin() / blockSize;
 		if(blocks[index] == null){
-			blocks[index] = b1.getBytes();
+			blocks[index] = block.getBytes();
 		}
 //		buffer.position(index * blockSize);
 //		buffer.put(b1.getBytes(), 0, b1.getBytes().length);

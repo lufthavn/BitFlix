@@ -402,8 +402,8 @@ public class PeerConnector implements IPeerConnector {
 				return;
 			}
 			PieceMessage data = (PieceMessage)message;
-			Block block = new Block(data.getBlock());
-			piece.addBlock(data.getBegin() / pieceHandler.getBlockSize(), block);
+			Block block = new Block(data.getIndex(), data.getBegin(), data.getBlock());
+			piece.addBlock(block);
 			System.out.println(piece.indexOfNextBlock() + " : " + piece.nextBlockSize());
 			if(piece.indexOfNextBlock() >= 0){
 				RequestMessage r = new RequestMessage(piece.getIndex(), piece.indexOfNextBlock(), piece.nextBlockSize());
