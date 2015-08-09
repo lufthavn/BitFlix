@@ -11,17 +11,17 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import peers.IPieceTaskBuffer;
 import peers.Peer;
 import peers.PeerConnector;
 import peers.PeerPool;
-import peers.PieceTaskBuffer;
 import trackers.PeerRequester;
 import trackers.Tracker;
 import trackers.TrackerConnection;
 import trackers.TrackerPool;
 import trackers.TrackerSocket;
+import files.IPieceTaskBuffer;
 import files.Piece;
+import files.PieceTaskBuffer;
 import files.TorrentFile;
 import files.TorrentFileWriter;
 

@@ -4,8 +4,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 
-import peers.IPieceTaskBuffer;
-
 public class TorrentFileWriter implements Runnable {
 
 	private boolean isRunning;

@@ -1,4 +1,4 @@
-package peers;
+package files;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -6,8 +6,6 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-
-import files.Piece;
 
 public class PieceTaskBuffer implements IPieceTaskBuffer {
 

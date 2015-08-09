@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 
 import files.Block;
+import files.IPieceTaskBuffer;
 import files.Piece;
 import files.TorrentFile;
 import messages.BitfieldMessage;

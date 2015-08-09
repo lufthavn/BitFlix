@@ -1,8 +1,6 @@
-package peers;
+package files;
 
 import java.util.List;
-
-import files.Piece;
 
 public interface IPieceTaskBuffer {
 
