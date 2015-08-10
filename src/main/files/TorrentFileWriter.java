@@ -2,20 +2,24 @@ package files;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.concurrent.BlockingQueue;
+import files.tasks.ReadResult;
+import files.tasks.ReadTask;
+import files.tasks.Task;
+import files.tasks.WriteResult;
+import files.tasks.WriteTask;
 
 public class TorrentFileWriter implements Runnable {
 
 	private boolean isRunning;
 	
-	private final BlockingQueue<Piece> pieceQueue;
+	private final IPieceTaskBuffer buffer;
 	private final PieceWriter writer;
 	
 	private long totalLength;
 	private long totalWritten;
 	
-	public TorrentFileWriter(String baseDir, TorrentFile file, BlockingQueue<Piece> queue) throws FileNotFoundException{
-		this.pieceQueue = queue;
+	public TorrentFileWriter(String baseDir, TorrentFile file, IPieceTaskBuffer queue) throws FileNotFoundException{
+		this.buffer = queue;
 		this.writer = new PieceWriter(baseDir, file);
 		this.isRunning = false;
 		this.totalLength = file.getLength();
@@ -28,27 +32,49 @@ public class TorrentFileWriter implements Runnable {
 		try {
 			writer.reserve();
 			while(isRunning){
-				Piece p = pieceQueue.take();
-				writer.writePiece(p);
-				totalWritten += p.getBytes().length;
+				Task task = buffer.takeTask();
+				switch(task.getType()){
+				case READ:
+					read((ReadTask)task);
+					break;
+				case WRITE:
+					write((WriteTask) task);
+					break;
+				default:
+					break;
 				
-				if(totalWritten == totalLength){
-					System.out.println("all done with writing file");
-					isRunning = false;
-				}else if(totalWritten > totalLength){
-					System.err.println("More bytes than the length of the torrent were written. Somehow.");
-					isRunning = false;
 				}
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
 	}
 	
+	private void read(ReadTask task) throws IOException {
+		byte[] data = writer.read(task.getPieceIndex(), task.getBegin(), task.getLength());
+		ReadResult result = new ReadResult(task.getPieceIndex(), task.getBegin(), data, task.getPeer());
+		buffer.addResult(result);
+	}
+
+	private void write(WriteTask task) throws IOException {
+		
+		Piece p = task.getPiece();
+		writer.writePiece(p);
+		totalWritten += p.getBytes().length;
+		
+		WriteResult result = new WriteResult(p);
+		buffer.addResult(result);;
+		if(totalWritten == totalLength){
+			System.out.println("all done with writing file");
+			isRunning = false;
+		}else if(totalWritten > totalLength){
+			System.err.println("More bytes than the length of the torrent were written. Somehow.");
+			isRunning = false;
+		}
+		
+	}
+
 	public void stop(){
 		isRunning = false;
 	}

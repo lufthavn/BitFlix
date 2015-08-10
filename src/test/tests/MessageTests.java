@@ -15,6 +15,7 @@ import messages.RequestMessage;
 import org.junit.Test;
 
 import peers.HaveBitfield;
+import peers.MessageHandler;
 import peers.Peer;
 import files.TorrentFile;
 
@@ -61,7 +62,7 @@ public class MessageTests {
 		
 		BitfieldMessage m = (BitfieldMessage) Message.fromBytes(buffer);
 		assertEquals(MessageType.BITFIELD, m.getType());
-		assertArrayEquals("abcde".getBytes(), m.getBitField().getBytes());
+		assertArrayEquals("abcde".getBytes(), m.getBitField());
 	}
 	
 	@Test
@@ -98,8 +99,19 @@ public class MessageTests {
 	public void canInterpretBitfield(){
 		int i = 1333333337; //01001111 01111001 00001101 01011001
 		byte[] bitfield = ByteBuffer.allocate(4).putInt(i).array();
-		boolean isAvailable = new HaveBitfield(bitfield).hasPiece(9); // bit at index 9 is 1, so should return true.
+		boolean isAvailable = new HaveBitfield(bitfield, 32).hasPiece(9); // bit at index 9 is 1, so should return true.
 		assertTrue(isAvailable);
+	}
+	
+	@Test
+	public void canCalculatePercentage(){
+		byte[] bytes = new byte[4];
+		bytes[0] = (byte) 0b01010001;
+		bytes[1] = (byte) 0b11010010;
+		bytes[2] = (byte) 0b10010101;
+		bytes[3] = (byte) 0b11100100;
+		double percent = new HaveBitfield(bytes, 30).percentComplete();
+		assertEquals(50, percent, 0);
 	}
 	
 	@Test
@@ -118,5 +130,40 @@ public class MessageTests {
 		peer.setHasPiece(12);//00000000 00001000
 		assertEquals(1, peer.getHaveBitField().getBytes()[0]);
 		assertEquals(8, peer.getHaveBitField().getBytes()[1]);
+	}
+	
+	@Test
+	public void canParseMessageFromPeer(){
+		MessageHandler handler = new MessageHandler();
+		Peer peer = mock(Peer.class);
+		
+		ByteBuffer message1 = ByteBuffer.allocate(9)
+				.put((byte) 7)
+				.putInt(0)
+				.putInt(0);
+		message1.position(0);
+		
+		ByteBuffer message2 = ByteBuffer.allocate(26)
+				.put("abcdefghijklmnopqrstuvwxyz".getBytes());
+		message2.position(0);
+		
+		handler.newMessage(peer, 35);
+		
+		ByteBuffer buffer = handler.bufferForPeer(peer);
+		
+		buffer.put(message1);
+		buffer.put(message2);
+		Message message = handler.messageForPeer(peer);
+		
+		assertEquals(MessageType.PIECE, message.getType());
+		assertArrayEquals("abcdefghijklmnopqrstuvwxyz".getBytes(), ((PieceMessage)message).getBlock());
+		
+	}
+	
+	@Test
+	public void peerReady(){
+		MessageHandler handler = new MessageHandler();
+		Peer peer = mock(Peer.class);
+		assertTrue(handler.ready(peer));
 	}
 }

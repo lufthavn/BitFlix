@@ -5,22 +5,25 @@ import java.util.BitSet;
 public class HaveBitfield {
 	private byte[] bits;
 	private int trailLength;
-	private long length;
+	private long pieceAmount;
 
 	/**
-	 * @param length the amunt of pieces in torrent this bitfield keeps track of.
+	 * @param pieceAmount the amount of pieces in torrent this bitfield keeps track of.
 	 */
-	public HaveBitfield(long length){
-		this.length = length;
-		int bitfieldLength = (int) Math.ceil((double)length / 8);
+	public HaveBitfield(long pieceAmount){
+		this.pieceAmount = pieceAmount;
+		int bitfieldLength = (int) Math.ceil((double)pieceAmount / Byte.SIZE);
+		this.trailLength  = (int) (pieceAmount % Byte.SIZE);
 		bits = new byte[bitfieldLength];
-		this.trailLength  = (int) (length % Byte.SIZE);
+		
 	}
 	
-	public HaveBitfield(byte[] bitField) {
-		this.length = bitField.length;
+	public HaveBitfield(byte[] bitField, long expectedPieceAmount) {
+		this.pieceAmount = (bitField.length * Byte.SIZE);
+		int trail = (int) (pieceAmount % expectedPieceAmount);
+		this.pieceAmount -= trail;
+		this.trailLength  = (int) (pieceAmount % Byte.SIZE);
 		this.bits = bitField;
-		this.trailLength  = (int) (length % Byte.SIZE);
 	}
 
 	/**
@@ -28,8 +31,8 @@ public class HaveBitfield {
 	 */
 	public void setHasPiece(int index){
 		
-		int byteIndex = index / 8;
-		int bitIndex = index % 8;
+		int byteIndex = index / Byte.SIZE;
+		int bitIndex = index % Byte.SIZE;
 		
 		/*
 		 * initial:  01000000
@@ -45,8 +48,8 @@ public class HaveBitfield {
 	 * @return
 	 */
 	public boolean hasPiece(int index){
-		int byteIndex = index / 8;
-		int bitIndex = index % 8;
+		int byteIndex = index / Byte.SIZE;
+		int bitIndex = index % Byte.SIZE;
 		int shift = bits[byteIndex] << bitIndex;
 		int and = shift & 128;
 		
@@ -54,10 +57,9 @@ public class HaveBitfield {
 	}
 	
 	public double percentComplete(){
-		long totalBits = (length * 8) - trailLength;
 		long setBits = BitSet.valueOf(bits).cardinality();
 
-		return  setBits * 100 / (double)totalBits;
+		return  setBits * 100 / (double)pieceAmount;
 	}
 
 	public boolean isFinished() {

@@ -7,10 +7,7 @@ import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.nio.channels.ClosedChannelException;
 import java.util.Queue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-
 import peers.Peer;
 import peers.PeerConnector;
 import peers.PeerPool;
@@ -19,7 +16,8 @@ import trackers.Tracker;
 import trackers.TrackerConnection;
 import trackers.TrackerPool;
 import trackers.TrackerSocket;
-import files.Piece;
+import files.IPieceTaskBuffer;
+import files.PieceTaskBuffer;
 import files.TorrentFile;
 import files.TorrentFileWriter;
 
@@ -66,13 +64,13 @@ public class Program {
 		peerThread.setDaemon(true);
 		peerThread.start();
 		
-		BlockingQueue<Piece> pieceQueue = new LinkedBlockingQueue<Piece>();
+		IPieceTaskBuffer pieceQueue = new PieceTaskBuffer();
 		TorrentFileWriter writer = new TorrentFileWriter(args[1], file, pieceQueue);
 		Thread writerThread = new Thread(writer, "WriterThread");
 		writerThread.setDaemon(true);
 		writerThread.start();
 		
-		PeerPool p = new PeerPool(file, peers, new PeerConnector(file, pieceQueue), 10);
+		PeerPool p = new PeerPool(file, peers, new PeerConnector(file, pieceQueue), 30);
 		
 		for(;;){
 			try{
@@ -85,7 +83,6 @@ public class Program {
 				System.out.println("Connection error: " + e.getMessage());
 				e.printStackTrace();
 			}
-			Thread.sleep(20);
 		}
 //		System.out.println("All done.");
 //		System.exit(0);

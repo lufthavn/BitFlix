@@ -1,6 +1,5 @@
 package peers;
 
-import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -81,6 +80,11 @@ public class PieceHandler {
 		Piece piece = pieces.remove(peer);
 		haveBitfield.setHasPiece(piece.getIndex());
 		return piece;
+	}
+	
+	public void finishPiece(Piece piece){
+		pieces.values().remove(piece);
+		haveBitfield.setHasPiece(piece.getIndex());
 	}
 
 	public int remainingBlocks(Peer peer) {

@@ -27,8 +27,12 @@ public class PieceTests {
 		Block b2 = mock(Block.class);
 		when(b1.getBytes()).thenReturn("abcdefghijklm".getBytes());
 		when(b2.getBytes()).thenReturn("nopqrstuvwxyz".getBytes());
-		piece.addBlock(0, b1);
-		piece.addBlock(1, b2);
+		
+		when(b1.getBegin()).thenReturn(0);
+		when(b2.getBegin()).thenReturn(13);
+		
+		piece.addBlock(b1);
+		piece.addBlock(b2);
 		
 		assertTrue(piece.checkHash());
 	}
@@ -42,8 +46,12 @@ public class PieceTests {
 		Block b2 = mock(Block.class);
 		when(b1.getBytes()).thenReturn("abcdefghijklmnopqrst".getBytes());
 		when(b2.getBytes()).thenReturn("uvwxyz".getBytes());
-		piece.addBlock(0, b1);
-		piece.addBlock(1, b2);
+		
+		when(b1.getBegin()).thenReturn(0);
+		when(b2.getBegin()).thenReturn(20);
+		
+		piece.addBlock(b1);
+		piece.addBlock(b2);
 		
 		assertTrue(piece.checkHash());
 	}
@@ -55,12 +63,12 @@ public class PieceTests {
 		Piece piece = new Piece(hash, 100, 30, 0);
 		Block b = mock(Block.class);
 		when(b.getBytes()).thenReturn("abcdefghijklmnopqrstuvwxyz1111".getBytes());
-		
+		when(b.getBegin()).thenReturn(0, 30, 60);
 		
 		int s1 = piece.nextBlockSize();
-		piece.addBlock(0, b);
-		piece.addBlock(1, b);
-		piece.addBlock(2, b);
+		piece.addBlock(b);
+		piece.addBlock(b);
+		piece.addBlock(b);
 		int s2 = piece.nextBlockSize();
 		
 		assertEquals(30, s1);
@@ -180,5 +188,7 @@ public class PieceTests {
 			handler.finishPiece(peer);
 		}
 		assertTrue(handler.isFinished());
+		double percent = handler.getHaveBitField().percentComplete();
+		assertEquals(100, percent, 0);
 	}
 }

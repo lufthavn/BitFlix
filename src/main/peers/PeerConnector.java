@@ -7,15 +7,18 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.Arrays;
-import java.util.BitSet;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.BlockingQueue;
 
 import files.Block;
+import files.IPieceTaskBuffer;
 import files.Piece;
 import files.TorrentFile;
+import files.tasks.ReadResult;
+import files.tasks.ReadTask;
+import files.tasks.Result;
+import files.tasks.WriteResult;
+import files.tasks.WriteTask;
 import messages.BitfieldMessage;
 import messages.ChokeMessage;
 import messages.HaveMessage;
@@ -32,15 +35,17 @@ public class PeerConnector implements IPeerConnector {
 	private byte[] infohash;
 	private TorrentFile file;
 	
-	private PieceHandler handler;
+	private PieceHandler pieceHandler;
+	private MessageHandler messageHandler;
 	
-	private final BlockingQueue<Piece> pieceQueue;
+	private final IPieceTaskBuffer pieceQueue;
 
-	public PeerConnector(TorrentFile file, BlockingQueue<Piece> pieceQueue) throws IOException {
+	public PeerConnector(TorrentFile file, IPieceTaskBuffer pieceQueue) throws IOException {
 		selector  = Selector.open();
 		this.file = file;
 		this.infohash = file.getInfoHash();
-		handler = new PieceHandler(file);
+		pieceHandler = new PieceHandler(file);
+		messageHandler = new MessageHandler();
 		this.pieceQueue = pieceQueue;
 	}
 
@@ -48,6 +53,7 @@ public class PeerConnector implements IPeerConnector {
 	public void connect(Peer peer) throws IOException {
 		try{
 			SocketChannel channel = SocketChannel.open();
+			channel.socket().setSoTimeout(10000);
 			channel.configureBlocking(false);
 			channel.connect(new InetSocketAddress(peer.getAddress(), peer.getPort()));
 			
@@ -62,6 +68,26 @@ public class PeerConnector implements IPeerConnector {
 		selector.select(5000);
 		Set<SelectionKey> keys = selector.selectedKeys();
 		Iterator<SelectionKey> iterator = keys.iterator();
+		
+		for(Result r : pieceQueue.getCompletedTasks()){
+			switch(r.getType()){
+			case READ:
+				ReadResult result = (ReadResult)r;
+				PieceMessage message = new PieceMessage(result.getPieceIndex(), result.getBegin(), result.getBlock());
+				result.getPeer().addMessageToQueue(message);
+				break;
+			case WRITE:
+				Piece p = ((WriteResult)r).getPiece();
+				pieceHandler.finishPiece(p);
+				addMessageToAllPeers(new HaveMessage(p.getIndex()));
+				System.out.println("piece successfully written to hard drive. Progress: " + pieceHandler.getHaveBitField().percentComplete() + "%.");
+				break;
+			default:
+				break;
+			}
+
+		}
+		
 		while(iterator.hasNext()){
 			SelectionKey key = iterator.next();
 			SocketChannel channel = (SocketChannel) key.channel();
@@ -81,26 +107,15 @@ public class PeerConnector implements IPeerConnector {
 			}
 			
 			if(!peer.isChokingThis()){
-				int index = handler.nextPieceIndex();
-				if(peer.hasPiece(index) && !handler.isAssigned(index) && !handler.isAssigned(peer)){
-					handler.assign(peer);
-					Piece p = handler.getPiece(peer);
+				int index = pieceHandler.nextPieceIndex();
+				if(peer.hasPiece(index) && !pieceHandler.isAssigned(peer)){
+					pieceHandler.assign(peer);
+					Piece p = pieceHandler.getPiece(peer);
 					int begin = p.indexOfNextBlock();
 					
 					Message m = new RequestMessage(index, begin, p.nextBlockSize());
 					peer.addMessageToQueue(m);
 				}
-				
-//				int lastPieceIndex = handler.getPieceAmount() - 1;
-//				if(!handler.isAssigned(peer) && peer.hasPiece(lastPieceIndex) && !handler.isAssigned(lastPieceIndex)){
-//					handler.assign(peer, lastPieceIndex);
-//					Piece p = handler.getPiece(peer);
-//					int begin = p.indexOfNextBlock();
-//					int bs = p.nextBlockSize();
-//					
-//					Message m = new Request(lastPieceIndex, begin, bs);
-//					peer.addMessageToQueue(m);
-//				}
 				
 			}
 			
@@ -124,6 +139,7 @@ public class PeerConnector implements IPeerConnector {
 			if(!peer.isConnected()){
 				finishHandshake(key);
 				if(key.isValid()){
+					peer.addMessageToQueue(new BitfieldMessage(pieceHandler.getHaveBitField().getBytes()));
 					System.out.println("connected to peer with id: " + peer.getPeerId());
 				}
 			}else{
@@ -244,32 +260,33 @@ public class PeerConnector implements IPeerConnector {
 	 */
 	private Message receiveMessage(SelectionKey key){
 		SocketChannel channel = (SocketChannel) key.channel();
+		Peer peer = (Peer) key.attachment();
 		
 		//get the length of the message
-		int length = readLength(channel);
-		if(length < 0){
-			removeConnection(key);
-			return null;
+		if(messageHandler.ready(peer)){
+			int length = readLength(channel);
+			if(length < 0){
+				removeConnection(key);
+				return null;
+			}
+			messageHandler.newMessage(peer, length);
 		}
 		
 		//read the actual message
-		byte[] message = readFromSocket(channel, length);
-		if(message == null){
+		boolean success = readFromSocket(channel, messageHandler.bufferForPeer(peer));
+		if(!success){
 			removeConnection(key);
 			return null;
 		}
-		
-		//parse the received bytes to a Message object
-		ByteBuffer buffer = ByteBuffer.allocate(4 + message.length);
-		buffer.putInt(length);
-		buffer.put(message);
-		Message m = Message.fromBytes(buffer);
-		return m;
+		if(messageHandler.messageComplete(peer)){
+			return messageHandler.messageForPeer(peer);
+		}
+		return null;
 	}
 	
 	private void removeConnection(SelectionKey key) {
 		System.out.println("removing peer with address " + ((Peer)key.attachment()).getAddress());
-		handler.unassign((Peer)key.attachment());
+		pieceHandler.unassign((Peer)key.attachment());
 		try {
 			key.channel().close();
 		} catch (IOException e) {
@@ -287,6 +304,14 @@ public class PeerConnector implements IPeerConnector {
 		return ByteBuffer.wrap(bytes).getInt(0);
 	}
 	
+	/**
+	 * Reads the specified amount of bytes from the channel. 
+	 * This method blocks until all the bytes have been read. Is therefore inefficient for large messages, and should only be used 
+	 * for very small ones.
+	 * @param channel the channel to read from.
+	 * @param length the amount of bytes to read from this channel.
+	 * @return the read bytes
+	 */
 	private byte[] readFromSocket(SocketChannel channel, int length){
 		ByteBuffer buffer = ByteBuffer.allocate(length);
 		int read = 0;
@@ -311,22 +336,41 @@ public class PeerConnector implements IPeerConnector {
 		}
 	}
 	
+	/**
+	 * @param channel
+	 * @param buffer
+	 * @return true if the read was successful, false if not. If the read was unsuccessful, this connection should be terminated.
+	 */
+	private boolean readFromSocket(SocketChannel channel, ByteBuffer buffer){
+		int read = 0;
+		boolean isValid = true;
+		try{
+			read = channel.read(buffer);
+			isValid = read >= 0;
+		}catch(IOException e){
+			//TODO: logging
+			isValid = false;
+		}
+		
+		return isValid;
+	}
+	
 	private void handleMessage(Message message, Peer peer){
 		switch(message.getType()){
 		case BITFIELD:{
 				BitfieldMessage bitfield = (BitfieldMessage)message;
-				peer.setHaveBitfield(bitfield.getBitField());
+				byte[] bits = bitfield.getBitField();
+				
+				peer.setHaveBitfield(new HaveBitfield(bits, this.file.getPieces().length));
 	
 				double percentage =  peer.getHaveBitField().percentComplete();
-				if(percentage >= 97){
+				if(percentage >= 95){
 					//yo, this peer is gooood.
 					InterestMessage i = new InterestMessage(2);
 					peer.addMessageToQueue(i);
 					peer.setInterested(true);
 				}else{
-					InterestMessage i = new InterestMessage(2);
 					peer.setInterested(false);
-					peer.addMessageToQueue(i);
 				}
 				System.out.println("A peer sent a BITFIELD request, and has " + percentage + "% of the pieces");
 			}
@@ -334,6 +378,7 @@ public class PeerConnector implements IPeerConnector {
 		case CANCEL:
 			break;
 		case CHOKE:
+			pieceHandler.unassign(peer);
 			peer.setChokingThis(true);
 			break;
 		case HAVE:
@@ -359,14 +404,22 @@ public class PeerConnector implements IPeerConnector {
 			
 			break;
 		case INTERESTED:
+			peer.setInterestedInThis(true);
+			peer.setChoking(false);
+			peer.addMessageToQueue(new ChokeMessage(1));
 			break;
 		case KEEPALIVE:
 			break;
 		case PIECE:
-			Piece piece = handler.getPiece(peer);
+			Piece piece = pieceHandler.getPiece(peer);
+			//if the peer sends a block for a piece it isn't assigned to, or a block to a piece that is complete, it should be removed.
+			if(piece == null || piece.remainingBlocks() == 0){
+				pieceHandler.unassign(peer);
+				return;
+			}
 			PieceMessage data = (PieceMessage)message;
-			Block block = new Block(data.getBlock());
-			piece.addBlock(data.getBegin() / handler.getBlockSize(), block);
+			Block block = new Block(data.getIndex(), data.getBegin(), data.getBlock());
+			piece.addBlock(block);
 			System.out.println(piece.indexOfNextBlock() + " : " + piece.nextBlockSize());
 			if(piece.indexOfNextBlock() >= 0){
 				RequestMessage r = new RequestMessage(piece.getIndex(), piece.indexOfNextBlock(), piece.nextBlockSize());
@@ -374,35 +427,53 @@ public class PeerConnector implements IPeerConnector {
 			}else{
 				boolean success = piece.checkHash();
 				if(success){
-					Piece p = handler.finishPiece(peer);
-					try {
-						pieceQueue.put(p);
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+					pieceQueue.addTask(new WriteTask(piece));
 				}else{
-					handler.unassign(peer);
+					pieceHandler.unassign(peer);
 				}
-				System.out.println("piece checked. Hash success: " + success + ". Progress: " + handler.getHaveBitField().percentComplete() + "%.");
 			}
 
 			break;
 		case PORT:
 			break;
 		case REQUEST:
+			RequestMessage m = (RequestMessage)message;
+			if(pieceHandler.getHaveBitField().hasPiece(m.getIndex())){
+				pieceQueue.addTask(new ReadTask(m.getIndex(), m.getBegin(), m.getLength(), peer));
+			}
+			//TODO: disconnect if piece is unavailable
 			break;
-		case UNCHOKE:
+		case UNCHOKE:{
 			peer.setChokingThis(false);
 			ChokeMessage c = new ChokeMessage(1);
 			peer.addMessageToQueue(c);
 			break;
-		case UNINTERESTED:
+		}
+		case UNINTERESTED:{
+			peer.setChoking(true);
+			peer.setInterestedInThis(false);
+			ChokeMessage c = new ChokeMessage(0);
+			peer.addMessageToQueue(c);
 			break;
+		}
 		default:
 			break;
 		
 		}
+	}
+
+	/**
+	 * adds a message to send to all the peers this client is currently connected to (completed the handshake)
+	 * @param message
+	 */
+	private void addMessageToAllPeers(Message message) {
+		for(SelectionKey key : selector.keys()){
+			Peer peer = (Peer) key.attachment();
+			if(peer.isConnected()){
+				peer.addMessageToQueue(message);
+			}
+		}
+		
 	}
 
 	@Override
