@@ -2,8 +2,6 @@ package messages;
 
 import java.nio.ByteBuffer;
 
-import peers.HaveBitfield;
-
 public class BitfieldMessage extends Message {
 
 	private byte[] bitField;

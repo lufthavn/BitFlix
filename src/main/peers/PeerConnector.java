@@ -7,16 +7,15 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.Arrays;
-import java.util.BitSet;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.BlockingQueue;
 
 import files.Block;
 import files.IPieceTaskBuffer;
 import files.Piece;
 import files.TorrentFile;
+import files.tasks.ReadResult;
+import files.tasks.ReadTask;
 import files.tasks.Result;
 import files.tasks.WriteResult;
 import files.tasks.WriteTask;
@@ -73,6 +72,9 @@ public class PeerConnector implements IPeerConnector {
 		for(Result r : pieceQueue.getCompletedTasks()){
 			switch(r.getType()){
 			case READ:
+				ReadResult result = (ReadResult)r;
+				PieceMessage message = new PieceMessage(result.getPieceIndex(), result.getBegin(), result.getBlock());
+				result.getPeer().addMessageToQueue(message);
 				break;
 			case WRITE:
 				Piece p = ((WriteResult)r).getPiece();
@@ -81,7 +83,8 @@ public class PeerConnector implements IPeerConnector {
 				System.out.println("piece successfully written to hard drive. Progress: " + pieceHandler.getHaveBitField().percentComplete() + "%.");
 				break;
 			default:
-				break;}
+				break;
+			}
 
 		}
 		
@@ -402,6 +405,7 @@ public class PeerConnector implements IPeerConnector {
 			break;
 		case INTERESTED:
 			peer.setInterestedInThis(true);
+			peer.setChoking(false);
 			peer.addMessageToQueue(new ChokeMessage(1));
 			break;
 		case KEEPALIVE:
@@ -433,14 +437,25 @@ public class PeerConnector implements IPeerConnector {
 		case PORT:
 			break;
 		case REQUEST:
+			RequestMessage m = (RequestMessage)message;
+			if(pieceHandler.getHaveBitField().hasPiece(m.getIndex())){
+				pieceQueue.addTask(new ReadTask(m.getIndex(), m.getBegin(), m.getLength(), peer));
+			}
+			//TODO: disconnect if piece is unavailable
 			break;
-		case UNCHOKE:
+		case UNCHOKE:{
 			peer.setChokingThis(false);
 			ChokeMessage c = new ChokeMessage(1);
 			peer.addMessageToQueue(c);
 			break;
-		case UNINTERESTED:
+		}
+		case UNINTERESTED:{
+			peer.setChoking(true);
+			peer.setInterestedInThis(false);
+			ChokeMessage c = new ChokeMessage(0);
+			peer.addMessageToQueue(c);
 			break;
+		}
 		default:
 			break;
 		

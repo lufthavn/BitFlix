@@ -2,8 +2,6 @@ package messages;
 
 import java.nio.ByteBuffer;
 
-import peers.HaveBitfield;
-
 public abstract class Message {
 	
 	public abstract MessageType getType();

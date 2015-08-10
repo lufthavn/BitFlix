@@ -2,8 +2,8 @@ package files;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.concurrent.BlockingQueue;
-
+import files.tasks.ReadResult;
+import files.tasks.ReadTask;
 import files.tasks.Task;
 import files.tasks.WriteResult;
 import files.tasks.WriteTask;
@@ -12,14 +12,14 @@ public class TorrentFileWriter implements Runnable {
 
 	private boolean isRunning;
 	
-	private final IPieceTaskBuffer pieceQueue;
+	private final IPieceTaskBuffer buffer;
 	private final PieceWriter writer;
 	
 	private long totalLength;
 	private long totalWritten;
 	
 	public TorrentFileWriter(String baseDir, TorrentFile file, IPieceTaskBuffer queue) throws FileNotFoundException{
-		this.pieceQueue = queue;
+		this.buffer = queue;
 		this.writer = new PieceWriter(baseDir, file);
 		this.isRunning = false;
 		this.totalLength = file.getLength();
@@ -32,9 +32,10 @@ public class TorrentFileWriter implements Runnable {
 		try {
 			writer.reserve();
 			while(isRunning){
-				Task task = pieceQueue.takeTask();
+				Task task = buffer.takeTask();
 				switch(task.getType()){
 				case READ:
+					read((ReadTask)task);
 					break;
 				case WRITE:
 					write((WriteTask) task);
@@ -50,6 +51,12 @@ public class TorrentFileWriter implements Runnable {
 		}
 	}
 	
+	private void read(ReadTask task) throws IOException {
+		byte[] data = writer.read(task.getPieceIndex(), task.getBegin(), task.getLength());
+		ReadResult result = new ReadResult(task.getPieceIndex(), task.getBegin(), data, task.getPeer());
+		buffer.addResult(result);
+	}
+
 	private void write(WriteTask task) throws IOException {
 		
 		Piece p = task.getPiece();
@@ -57,7 +64,7 @@ public class TorrentFileWriter implements Runnable {
 		totalWritten += p.getBytes().length;
 		
 		WriteResult result = new WriteResult(p);
-		pieceQueue.addResult(result);;
+		buffer.addResult(result);;
 		if(totalWritten == totalLength){
 			System.out.println("all done with writing file");
 			isRunning = false;

@@ -1,6 +1,5 @@
 package peers;
 
-import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,7 +20,7 @@ public class MessageHandler {
 	 */
 	public void newMessage(Peer peer, int length) {
 		//allocate a bytebuffer for the message, with the size incremented to also fit the passed length argument.
-		peers.put(peer, (ByteBuffer) ByteBuffer.allocate(length + Integer.BYTES).putInt(length));
+		peers.put(peer, ByteBuffer.allocate(length + Integer.BYTES).putInt(length));
 	}
 
 	public ByteBuffer bufferForPeer(Peer peer) {
