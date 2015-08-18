@@ -1,6 +1,8 @@
 package files;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import util.Hashing;
 
@@ -72,30 +74,56 @@ public class Piece {
 		for(int i = 0; i < length; i++){
 			byte[] block = blocks[i];
 			if(block == null){
-				if (i == (length -1)){
-					int r = pieceLength % blockSize;
-					if(r == 0){
-						return blockSize;
-					}
-					return r;
-				}
-				return blockSize;
+				return sizeOfBlock(i);
 			}
 		}
 		return 0;
+	}
+	
+	private int sizeOfBlock(int blockIndex){
+		if (blockIndex == (blocks.length -1)){
+			int r = pieceLength % blockSize;
+			if(r == 0){
+				return blockSize;
+			}
+			return r;
+		}
+		return blockSize;
 	}
 
 	/**
 	 * @return the index of the first byte of next block to be added to this piece, starting from block at index 0. returns -1 if this piece is complete.
 	 */
-	public int indexOfNextBlock(){
+	public int beginOfNextBlock(){
 		for(int i = 0; i < blocks.length; i++){
 			byte[] block = blocks[i];
 			if(block == null){
-				return i * blockSize;
+				return beginOfBlock(i);
 			}
 		}
 		return -1;
+	}
+	
+	private int beginOfBlock(int blockIndex){
+		return blockIndex * blockSize;
+	}
+	
+	/**
+	 * @return the info of all the missing blocks in this piece. Returns an empty array if piece is complete.
+	 */
+	public List<BlockInfo> missingBlocks(){
+		List<BlockInfo> indexes = new ArrayList<BlockInfo>();
+		
+		for(int i = 0; i < blocks.length; i++){
+			byte[] block = blocks[i];
+			if(block == null){
+				int begin = beginOfBlock(i);
+				int length = sizeOfBlock(i);
+				indexes.add(new BlockInfo(begin, length));
+			}
+		}
+		
+		return indexes;
 	}
 
 	public int remainingBlocks() {
@@ -108,5 +136,27 @@ public class Piece {
 		return amount;
 	}
 
-	
+	public static class BlockInfo{
+		private int begin;
+		private int length;
+
+		public BlockInfo(int begin, int length){
+			this.begin = begin;
+			this.length = length;
+		}
+
+		/**
+		 * @return the index
+		 */
+		public int getBegin() {
+			return begin;
+		}
+
+		/**
+		 * @return the length
+		 */
+		public int getLength() {
+			return length;
+		}
+	}
 }

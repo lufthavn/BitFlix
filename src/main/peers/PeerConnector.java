@@ -13,6 +13,7 @@ import java.util.Set;
 import files.Block;
 import files.IPieceTaskBuffer;
 import files.Piece;
+import files.Piece.BlockInfo;
 import files.TorrentFile;
 import files.tasks.ReadResult;
 import files.tasks.ReadTask;
@@ -111,10 +112,11 @@ public class PeerConnector implements IPeerConnector {
 				if(peer.hasPiece(index) && !pieceHandler.isAssigned(peer)){
 					pieceHandler.assign(peer);
 					Piece p = pieceHandler.getPiece(peer);
-					int begin = p.indexOfNextBlock();
 					
-					Message m = new RequestMessage(index, begin, p.nextBlockSize());
-					peer.addMessageToQueue(m);
+					for(BlockInfo info : p.missingBlocks()){
+						Message m = new RequestMessage(index, info.getBegin(), info.getLength());
+						peer.addMessageToQueue(m);
+					}
 				}
 				
 			}
@@ -420,10 +422,10 @@ public class PeerConnector implements IPeerConnector {
 			PieceMessage data = (PieceMessage)message;
 			Block block = new Block(data.getIndex(), data.getBegin(), data.getBlock());
 			piece.addBlock(block);
-			System.out.println(piece.indexOfNextBlock() + " : " + piece.nextBlockSize());
-			if(piece.indexOfNextBlock() >= 0){
-				RequestMessage r = new RequestMessage(piece.getIndex(), piece.indexOfNextBlock(), piece.nextBlockSize());
-				peer.addMessageToQueue(r);
+			System.out.println(block.getBegin() + " : " + block.getBytes().length);
+			if(piece.remainingBlocks() != 0){
+//				RequestMessage r = new RequestMessage(piece.getIndex(), piece.indexOfNextBlock(), piece.nextBlockSize());
+//				peer.addMessageToQueue(r);
 			}else{
 				boolean success = piece.checkHash();
 				if(success){
