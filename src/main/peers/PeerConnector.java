@@ -423,10 +423,7 @@ public class PeerConnector implements IPeerConnector {
 			Block block = new Block(data.getIndex(), data.getBegin(), data.getBlock());
 			piece.addBlock(block);
 			System.out.println(block.getBegin() + " : " + block.getBytes().length);
-			if(piece.remainingBlocks() != 0){
-//				RequestMessage r = new RequestMessage(piece.getIndex(), piece.indexOfNextBlock(), piece.nextBlockSize());
-//				peer.addMessageToQueue(r);
-			}else{
+			if(piece.remainingBlocks() == 0){
 				boolean success = piece.checkHash();
 				if(success){
 					pieceQueue.addTask(new WriteTask(piece));
